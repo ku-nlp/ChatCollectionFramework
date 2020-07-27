@@ -1,0 +1,13 @@
+{
+    "sessions": "/tmp/ChatCollectionServer",
+    "sessionTimeout": 30,
+    "cookiePath": "/ChatCollectionServer",
+    "archives": "/tmp/dialogs",
+    "web_context": "ChatCollectionServer",
+    "poll_interval": 30,
+    "delay_for_partner": 60,
+    "chatroom_cleaning_interval": 30,
+    "msg_count_low": 5,
+    "msg_count_high": 15,
+    "experiment_id": 123
+}

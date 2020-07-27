@@ -1,1 +1,6 @@
+config.json
+logging.conf
+App.py
+logs/*
 .venv
+todo.txt
