@@ -1,3 +1,4 @@
+from flask import session
 from server.utils import load_config
 from server.base import BaseApi, BaseApp
 import logging
