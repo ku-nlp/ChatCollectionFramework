@@ -18,6 +18,19 @@ if __name__ == '__main__':
     SESSION_COOKIE_PATH = cfg['cookiePath']
     SESSION_COOKIE_SECURE = True
 
-    app = BaseApp(__name__, cfg)
-    app.run(host='0.0.0.0', port=args.port, debug=False, threaded=True)
+    class App(BaseApp):
 
+        def __init__(self, import_name, cfg):
+            BaseApp.__init__(self, import_name, cfg)
+
+            # To add a new route:
+            # @self.route('/{}/test'.format(self.cfg['web_context']))
+            # def test():
+            #     return "test: new view"
+
+        # To override an existing view defined in BaseApp.
+        def version(self):
+            return "2.0"
+
+    app = App(__name__, cfg)
+    app.run(host='0.0.0.0', port=args.port, debug=False, threaded=True)

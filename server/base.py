@@ -8,4 +8,8 @@ class BaseApp(Flask):
 
         @self.route('/{}/version'.format(self.cfg['web_context']))
         def version():
-            return "1.0"
+            return self.version()
+
+
+    def version(self):
+        return "1.0"
