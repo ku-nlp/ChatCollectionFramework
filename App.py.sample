@@ -1,5 +1,5 @@
 from server.utils import load_config
-from server.base import BaseApp
+from server.base import BaseApi, BaseApp
 
 if __name__ == '__main__':
     import argparse
@@ -18,6 +18,16 @@ if __name__ == '__main__':
     SESSION_COOKIE_PATH = cfg['cookiePath']
     SESSION_COOKIE_SECURE = True
 
+    class Api(BaseApi):
+
+        def __init__(self, cfg):
+            BaseApi.__init__(self, cfg)
+
+        # To override an existing behavior defined in BaseApi.
+        # def version(self):
+        #     return "My special version X.Y"
+
+
     class App(BaseApp):
 
         def __init__(self, import_name, cfg):
@@ -28,9 +38,12 @@ if __name__ == '__main__':
             # def test():
             #     return "test: new view"
 
-        # To override an existing view defined in BaseApp.
+        # To override an existing behavior defined in BaseApp.
+        # You should try to override methods at the api level first.
+        # But it's also possible to do it at the app level.
         def version(self):
             return "2.0"
 
-    app = App(__name__, cfg)
+    api = Api(cfg)
+    app = App(__name__, api)
     app.run(host='0.0.0.0', port=args.port, debug=False, threaded=True)

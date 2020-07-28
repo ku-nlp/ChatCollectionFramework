@@ -1,10 +1,20 @@
 from flask import Flask
 
+class BaseApi:
+
+    def __init__(self, cfg):
+        self.cfg = cfg
+
+    def version(self):
+        return "1.0"
+
+
 class BaseApp(Flask):
 
-    def __init__(self, import_name, cfg):
+    def __init__(self, import_name, api):
         Flask.__init__(self, import_name)
-        self.cfg = cfg
+        self.api = api
+        self.cfg = api.cfg
 
         @self.route('/{}/version'.format(self.cfg['web_context']))
         def version():
@@ -12,4 +22,4 @@ class BaseApp(Flask):
 
 
     def version(self):
-        return "1.0"
+        return self.api.version()
