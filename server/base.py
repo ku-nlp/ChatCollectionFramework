@@ -1,5 +1,6 @@
-from flask import Flask, session
+from flask import Flask, render_template, session
 from flask_session import Session
+from jinja2.exceptions import TemplateNotFound
 
 class BaseApi:
 
@@ -8,7 +9,6 @@ class BaseApi:
         self.logger = logger
 
     def version(self):
-        self.logger.info("show version")
         return "1.0"
 
 
@@ -35,4 +35,8 @@ class BaseApp(Flask):
 
 
     def version(self):
-        return self.api.version()
+        version = self.api.version()
+        try:
+            return render_template('version.html', version=version)
+        except TemplateNotFound:
+            return render_template('default_version.html', version=version)

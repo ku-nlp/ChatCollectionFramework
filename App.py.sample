@@ -1,4 +1,4 @@
-from flask import session
+from flask import render_template, session
 from server.utils import load_config
 from server.base import BaseApi, BaseApp
 import logging
@@ -41,7 +41,12 @@ if __name__ == '__main__':
         # You should try to override methods at the api level first.
         # But it's also possible to do it at the app level.
         # def version(self):
-        #     return "2.0"
+        #     version = "X.Y"
+        #     return render_template('my_version.html', version=version)
+
+        # To customize an existing template, it's possible to add a template file
+        # without the 'default_' prefix.
+
 
     logging.config.fileConfig(args.log_config)
     logger = logging.getLogger('default')
