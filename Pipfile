@@ -8,6 +8,7 @@ verify_ssl = true
 [packages]
 flask = "*"
 pip = "*"
+flask-session = "*"
 
 [requires]
 python_version = "3.6"

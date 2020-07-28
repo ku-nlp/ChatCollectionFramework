@@ -15,12 +15,7 @@ if __name__ == '__main__':
 
     cfg = load_config()
 
-    SESSION_TYPE = 'filesystem'
-    SESSION_COOKIE_NAME = 'CGISESSID'
-    SESSION_FILE_DIR = cfg['sessions']
-    SESSION_COOKIE_PATH = cfg['cookiePath']
-    SESSION_COOKIE_SECURE = True
-
+    
     class Api(BaseApi):
 
         def __init__(self, cfg, logger):
