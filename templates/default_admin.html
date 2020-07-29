@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <title>チャットサーバー</title>
+    <link rel="stylesheet" href="static/default.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+</head>
+<body class="column small-font">
+    <h2>チャットサーバー (対話: {{experiment_id}})</h2>
+    <h3>チャットルーム ({{chatrooms|length}})</h3>
+    <div id="main-box">
+        <table id="chatrooms">
+            <tr><th>チャットルーム</th><th>ユーザー</th><th>メッセージ</th><th>作成時間</th><th>変更時間</th><th>ポール時間</th><th>ポール数</th></tr>
+            {% for chatroom in chatrooms %}
+                <tr>
+                    <td><span class="selectable">{{chatroom.id}}</span></td>
+                    <td>{% for user_id in chatroom.users %}<span class="selectable">{{ user_id }}</span><br/>{% endfor %}</td>
+                    <td>{{chatroom.events}}</td>
+                    <td><span class="selectable">{{utc_to_local(chatroom.created)}}</span></td>
+                    <td><span class="selectable">{{utc_to_local(chatroom.modified)}}</span></td>
+                    <td>{% for user_id in chatroom.users %}<span class="selectable">{{ user_id }}</span>: <span class="selectable">{{utc_to_local(chatroom.poll_requests[user_id][-1])}}</span><br/>{% endfor %}</td>
+                <td>{% for user_id in chatroom.users %}<span class="selectable">{{ user_id }}</span>: <span class="selectable">{{chatroom.poll_requests[user_id]|length}}</span><br/>{% endfor %}</td>
+                </tr>
+            {% endfor %}
+            {%  for released_chatroom in released_chatrooms %}
+                <tr>
+                    <td><span class="selectable">{{released_chatroom.id}}</span></td>
+                    <td><span class="selectable">-</span></td>
+                    <td>{{released_chatroom.events}}</td>
+                    <td><span class="selectable">{{utc_to_local(released_chatroom.created)}}</span></td>
+                    <td><span class="selectable">{{utc_to_local(released_chatroom.modified)}}</span></td>
+                    <td><span class="selectable">-</span></td>
+                    <td><span class="selectable">-</span></td>
+            {% endfor %}
+                </tr>
+        </table>
+    </div>
+</body>
+</html>
+
