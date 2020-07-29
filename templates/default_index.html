@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <title>チャットサーバー</title>
+    <link rel="stylesheet" href="static/default_style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="static/default_utils.js"></script>
+    <script>
+        function validateForm(evt) {
+            // Perform some validations here.
+            // If something is invalid, show an error message and return false.
+            // Otherwise return true.
+            //
+            // For example: 
+            //
+            // var selectedPartnerType = $('input[name="partner-type"]:checked').val();
+            // if (selectedPartnerType == 'gender-same' && (!selectedGender || selectedGender == 'unknown')) {
+            //     showSimpleDialog('注意', '同性とのチャットを希望される場合は、あなたの性別を選択してください。');
+            //     return false;
+            //}
+            return true;
+        }
+
+        $(document).ready(function(evt) {
+            // The clientTabId is used to differentiate users
+            // when the client uses more than one tab in his browser.
+            var clientTabId = new Date().getTime();
+            $('#client-tab-id').val(clientTabId);
+
+            $('#join-chat').on('click', validateForm);
+        });
+    </script>
+</head>
+<body class="column">
+<h1>対話収集タスクへようこそ</h1>
+<br/><br/>
+<p>チャットをスタートする時はボトンをクリックして下さい。</p>
+<br/><br/>
+<form id="form-join" action="join" method="POST">
+<input type="hidden" id="client-tab-id" name="clientTabId"/>
+</form>
+<input type="submit" id="join-chat" value="チャットを始める" class="button" form="form-join"/>
+<div id="dialog-simple"></div>
+</body>
+</html>

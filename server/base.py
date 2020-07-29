@@ -1,4 +1,4 @@
-from flask import Flask, render_template, session
+from flask import Flask, render_template, send_from_directory, session
 from flask_session import Session
 from jinja2.exceptions import TemplateNotFound
 
@@ -29,10 +29,20 @@ class BaseApp(Flask):
         self.config.from_object(self)
         Session(self)
 
+        @self.route('/{}/static/<path:path>'.format(self.cfg['web_context']))
+        def get_static(path):
+            return self.get_static(path)
+
         @self.route('/{}/version'.format(self.cfg['web_context']))
         def version():
             return self.version()
 
+        @self.route('/{}/index'.format(self.cfg['web_context']))
+        def index():
+            return self.index()
+
+    def get_static(self, path):
+        return send_from_directory('static', path)
 
     def version(self):
         version = self.api.version()
@@ -40,3 +50,9 @@ class BaseApp(Flask):
             return render_template('version.html', version=version)
         except TemplateNotFound:
             return render_template('default_version.html', version=version)
+
+    def index(self):
+        try:
+            return render_template('index.html')
+        except TemplateNotFound:
+            return render_template('default_index.html')
