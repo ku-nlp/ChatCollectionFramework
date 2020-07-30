@@ -107,6 +107,27 @@ class BaseChatroom(object):
         self.poll_requests[user].append(timestamp)
 
 
+class ChatroomCleaner(threading.Thread):
+
+    def __init__(self, server, logger, check_interval=30):
+        threading.Thread.__init__(self)
+        self.server = server
+        self.logger = logger
+        self.check_interval = check_interval
+
+    def run(self):
+        while True:
+            try:
+                time.sleep(self.check_interval)
+                self.server.clean_inactive_users()
+            except:
+                (typ, val, tb) = sys.exc_info()
+                error_msg = "An exception occurred in the ChatroomCleaner:\n"
+                for line in traceback.format_exception(typ, val, tb):
+                    error_msg += line + "\n"
+                self.logger.debug(error_msg)
+
+
 class BaseApi:
 
     def __init__(self, cfg, logger, user_class=BaseUser, chatroom_class=BaseChatroom):
@@ -123,6 +144,10 @@ class BaseApi:
         self.chatrooms = {}
         self.chatroom_locks = {}
         self.released_chatrooms = {}
+
+        self.chatroom_cleaner = ChatroomCleaner(self, self.logger,
+                                                check_interval=self.cfg['chatroom_cleaning_interval'])
+        self.chatroom_cleaner.start()
 
     def version(self):
         return "1.0"
@@ -244,6 +269,50 @@ class BaseApi:
             return data
         finally:
             self.mutex.release()
+
+    def clean_inactive_users(self):
+        self.logger.debug("clean_inactive_users")
+        start = time.time()
+        self.mutex.acquire()
+        try:
+            inactive_users = []
+            now = datetime.utcnow()
+            for chatroom_id in self.chatrooms:
+                if chatroom_id in self.chatroom_locks:
+                    chatroom_lock = self.chatroom_locks[chatroom_id]
+                    chatroom_lock.acquire()
+                    try:
+                        chatroom = self.chatrooms[chatroom_id]
+                        for user_id in chatroom.users:
+                            if user_id in chatroom.poll_requests.keys():
+                                last_poll = datetime.fromisoformat(chatroom.poll_requests[user_id][-1])
+                                self.logger.debug("now={0} type={1} last_poll={2} type={3}".format(now,
+                                                                                                   type(now),
+                                                                                                   last_poll,
+                                                                                                   type(last_poll))
+                                                  )
+                                delta = now - last_poll
+                                self.logger.debug(
+                                    'Check user {0}... Last poll: {1} Now: {2}'
+                                    ' Delta(s): {3}'.format(user_id,
+                                                            last_poll.isoformat(),
+                                                            now.isoformat(),
+                                                            delta.seconds)
+                                )
+                                # To play safe, I use a larger value than poll_interval
+                                if delta.seconds > self.cfg['poll_interval'] * 3:
+                                    self.logger.debug(
+                                        "{0} has been inactive for too long. Let's kick him out of room {1}.".format(
+                                            user_id, chatroom_id))
+                                    inactive_users.append((user_id, chatroom_id))
+                    finally:
+                        chatroom_lock.release()
+            for inactive_user in inactive_users:
+                user_id, chatroom_id = inactive_user
+                self._leave_chatroom(user_id, chatroom_id)
+        finally:
+            self.mutex.release()
+            self.logger.debug("clean_inactive_users performed in {0}".format(time.time() - start))
 
     def _get_chatroom_data(self, chatroom_id):
         chatroom = self.chatrooms[chatroom_id]
