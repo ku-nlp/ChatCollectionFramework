@@ -1,8 +1,10 @@
 from datetime import date, datetime
+import dateutil.parser
 from flask import Flask, jsonify, render_template, request, send_from_directory, session
 from flask_session import Session
 from jinja2.exceptions import TemplateNotFound
 import json
+from pathlib import Path
 import pytz
 import threading
 import time
@@ -234,6 +236,15 @@ class BaseApi:
         finally:
             chatroom_lock.release()
 
+    def leave_chatroom(self, user_id, chatroom_id):
+        self.logger.debug("leave_chatroom user_id={0} chatroom_id={1}".format(user_id, chatroom_id))
+        self.mutex.acquire()
+        try:
+            data = self._leave_chatroom(user_id, chatroom_id)
+            return data
+        finally:
+            self.mutex.release()
+
     def _get_chatroom_data(self, chatroom_id):
         chatroom = self.chatrooms[chatroom_id]
 
@@ -245,6 +256,63 @@ class BaseApi:
             'delay_for_partner': self.cfg['delay_for_partner']
         }
         return data
+
+    def _leave_chatroom(self, user_id, chatroom_id):
+        if chatroom_id not in self.chatrooms:
+            return
+        chatroom = self.chatrooms[chatroom_id]
+        if user_id not in chatroom.users:
+            return
+
+        chatroom.remove_user(user_id)
+        if len(chatroom.users) == 0:
+            self._archive_dialog(chatroom_id)
+            self.released_chatrooms[chatroom_id] = self.chatrooms[chatroom_id]
+            self.chatrooms.pop(chatroom_id)
+            self.chatroom_locks.pop(chatroom_id)
+            return
+
+        data = self._get_chatroom_data(chatroom_id)
+        return data
+
+    def _archive_dialog(self, chatroom_id):
+        self.logger.debug("Archiving dialog from chatroom {0}...".format(chatroom_id))
+
+        creation_date = dateutil.parser.parse(self.chatrooms[chatroom_id].created)
+
+        tz = pytz.timezone('Asia/Tokyo')
+
+        dialog_dir = "{0}/{1}/{2:0>2d}/{3:0>2d}".format(self.cfg['archives'], creation_date.year,
+                                                        creation_date.month, creation_date.day)
+        Path(dialog_dir).mkdir(parents=True, exist_ok=True)
+        dialog_filename = '{0}.txt'.format(chatroom_id)
+        with open("{0}/{1}".format(dialog_dir, dialog_filename), "w") as output_file:
+            if self.chatrooms[chatroom_id].experiment_id:
+                output_file.write("Experiment: {0}\n".format(self.chatrooms[chatroom_id].experiment_id))
+            self.logger.debug("initiator={0} exists? {1}".format(
+                self.chatrooms[chatroom_id].initiator,
+                self.chatrooms[chatroom_id].initiator in self.users)
+            )
+            initiator = self.users[self.chatrooms[chatroom_id].initiator]
+            output_file.write(
+                "Params(U1): attribs: {0}\n".format(initiator.attribs)
+            )
+            self.logger.debug("partner={0} exists? {1}".format(
+                self.chatrooms[chatroom_id].partner,
+                self.chatrooms[chatroom_id].partner in self.users)
+            )
+            if self.chatrooms[chatroom_id].partner:
+                partner = self.users[self.chatrooms[chatroom_id].partner]
+                output_file.write(
+                    "Params(U2): attribs: {0}\n".format(partner.attribs)
+                )
+            for evt in self.chatrooms[chatroom_id].events:
+                str_from = "U{0}".format(1 if evt['from'] == self.chatrooms[chatroom_id].initiator else 2)
+                timestamp = datetime.fromisoformat("{}+00:00".format(evt['timestamp'])).astimezone(tz).isoformat()
+                output_file.write("{0}|{1}: {2}\n".format(timestamp, str_from, evt['body']))
+                if 'checked' in evt and (evt['checked']):
+                    output_file.write("checked: {0}\n".format(evt['checked']))
+        self.logger.debug("Dialog has been archived in {0}/{1}".format(dialog_dir, dialog_filename))
 
 
 class BaseApp(Flask):
@@ -291,6 +359,10 @@ class BaseApp(Flask):
         @self.route('/{}/post'.format(self.cfg['web_context']), methods=['POST'])
         def post_message():
             return self.post_message(session, request)
+
+        @self.route('/{}/leave'.format(self.cfg['web_context']))
+        def leave_chatroom():
+            return self.leave_chatroom(session, request)
 
     def get_static(self, path):
         return send_from_directory('static', path)
@@ -386,6 +458,19 @@ class BaseApp(Flask):
         message = request.form['message']
         user_id = session.sid + '_' + client_tab_id
         data = self.api.post_message(user_id, chatroom_id, message)
+        response = "{}"
+        if data is not None:
+            response = self._get_chatroom_response(user_id, data)
+        return jsonify(response)
+
+    def leave_chatroom(self, session, request):
+        params = request.args.to_dict()
+        if 'clientTabId' not in params or 'chatroom' not in params:
+            return '', 400
+        client_tab_id = params.get('clientTabId')
+        chatroom_id = params.get('chatroom')
+        user_id = session.sid + '_' + client_tab_id
+        data = self.api.leave_chatroom(user_id, chatroom_id)
         response = "{}"
         if data is not None:
             response = self._get_chatroom_response(user_id, data)
