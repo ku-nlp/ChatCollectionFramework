@@ -213,6 +213,27 @@ class BaseApi:
 
             time.sleep(1.0)
 
+    def post_message(self, user_id, chatroom_id, message):
+        self.logger.debug("post_message user_id={0} chatroom_id={1} message={2}".format(user_id, chatroom_id, message))
+        if chatroom_id not in self.chatroom_locks:
+            return
+
+        chatroom_lock = self.chatroom_locks[chatroom_id]
+        chatroom_lock.acquire()
+        try:
+            if chatroom_id not in self.chatrooms:
+                return
+            chatroom = self.chatrooms[chatroom_id]
+            if user_id not in chatroom.users:
+                return
+            evt = {'type': 'msg', 'from': user_id, 'body': message, 'timestamp': datetime.utcnow().isoformat()}
+            chatroom.add_event(evt)
+
+            data = self._get_chatroom_data(chatroom_id)
+            return data
+        finally:
+            chatroom_lock.release()
+
     def _get_chatroom_data(self, chatroom_id):
         chatroom = self.chatrooms[chatroom_id]
 
@@ -266,6 +287,10 @@ class BaseApp(Flask):
         @self.route('/{}/chatroom'.format(self.cfg['web_context']))
         def get_chatroom():
             return self.get_chatroom(session, request)
+
+        @self.route('/{}/post'.format(self.cfg['web_context']), methods=['POST'])
+        def post_message():
+            return self.post_message(session, request)
 
     def get_static(self, path):
         return send_from_directory('static', path)
@@ -351,6 +376,19 @@ class BaseApp(Flask):
                 response = '{"msg": "poll expired"}'
             else:
                 response = self._get_chatroom_response(user_id, data)
+        return jsonify(response)
+
+    def post_message(self, session, request):
+        if 'clientTabId' not in request.form or 'chatroom' not in request.form or 'message' not in request.form:
+            return '', 400
+        client_tab_id = request.form['clientTabId']
+        chatroom_id = request.form['chatroom']
+        message = request.form['message']
+        user_id = session.sid + '_' + client_tab_id
+        data = self.api.post_message(user_id, chatroom_id, message)
+        response = "{}"
+        if data is not None:
+            response = self._get_chatroom_response(user_id, data)
         return jsonify(response)
 
     def _get_chatroom_response(self, user_id, data):
