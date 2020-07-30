@@ -1,0 +1,14 @@
+{"id": "{{chatroom_id}}",
+ "experimentId": "{{experiment_id}}",
+ "users": {{users}},
+ "created": "{{created}}",
+ "modified": "{{modified}}",
+ "initiator": "{{initiator}}",
+ "closed": {{closed}},
+ "latestEvents": {{events}},
+ "msgCountLow": {{msg_count_low}},
+ "msgCountHigh": {{msg_count_high}},
+ "pollInterval": {{poll_interval}},
+ "delayForPartner": {{delay_for_partner}}
+}
+

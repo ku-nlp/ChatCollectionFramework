@@ -1,13 +1,25 @@
 from datetime import date, datetime
-from flask import Flask, render_template, request, send_from_directory, session
+from flask import Flask, jsonify, render_template, request, send_from_directory, session
 from flask_session import Session
 from jinja2.exceptions import TemplateNotFound
+import json
 import pytz
 import threading
+import time
 import uuid
 
 
 tz = pytz.timezone('Asia/Tokyo')
+
+def events_for_user(evt, user_id):
+    event_for_user = {
+        'from': 'self' if evt['from'] == user_id else 'other',
+        'timestamp': evt['timestamp'],
+        'type': evt['type']
+    }
+    if 'body' in evt:
+        event_for_user['body'] = evt['body']
+    return event_for_user
 
 def utc_to_local(utc_timestamp):
     return datetime.fromisoformat("{}+00:00".format(utc_timestamp)).astimezone(tz).isoformat() if utc_timestamp else ""
@@ -131,7 +143,7 @@ class BaseApi:
             available_chatrooms = [self.chatrooms[id_] for id_ in self.chatrooms if
                                     len(self.chatrooms[id_].users) == 1 and
                                     not self.chatrooms[id_].closed and
-                                    user_id not in self.chatrooms[id_] and
+                                    user_id not in self.chatrooms[id_].users and
                                     user.has_matching_attribs(self.chatrooms[id_].users[0])]
 
             if len(available_chatrooms) > 0:
@@ -157,6 +169,49 @@ class BaseApi:
             return None
         finally:
             self.mutex.release()
+
+    def get_chatroom(self, chatroom_id, user_id, client_timestamp):
+        self.logger.debug("get_chatroom chatroom={0} user={1} client_timestamp={2}".format(chatroom_id,
+                                                                                           user_id,
+                                                                                           client_timestamp)
+                          )
+
+        request_time = datetime.utcnow()
+        while True:
+
+            if chatroom_id in self.chatroom_locks:
+                chatroom_lock = self.chatroom_locks[chatroom_id]
+
+                chatroom_lock.acquire()
+                try:
+                    if chatroom_id not in self.chatrooms:
+                        return None
+                    chatroom = self.chatrooms[chatroom_id]
+                    if user_id not in chatroom.users:
+                        return None
+                    chatroom.has_polled(user_id, request_time.isoformat())
+                    chatroom_has_changed = not client_timestamp or chatroom.has_changed(client_timestamp)
+                    self.logger.debug("user {0} checks if the chatroom has changed={1} "
+                                      "modified={2} vs client_timestamp={3}".format(user_id,
+                                                                                    chatroom_has_changed,
+                                                                                    chatroom.modified,
+                                                                                    client_timestamp)
+                                      )
+                    if chatroom_has_changed:
+                        data = self._get_chatroom_data(chatroom_id)
+                        return data
+
+                finally:
+                    chatroom_lock.release()
+
+            # Make sure that the function terminates after a certain delay.
+            # Otherwise, the poll requests will accumulate and make the web server crash.
+            waiting_period = (datetime.utcnow() - request_time).total_seconds()
+            if waiting_period >= (self.cfg['poll_interval']):
+                # self.logger.debug("Waiting period has expired: {0}".format(waiting_period))
+                return "expired"
+
+            time.sleep(1.0)
 
     def _get_chatroom_data(self, chatroom_id):
         chatroom = self.chatrooms[chatroom_id]
@@ -207,6 +262,10 @@ class BaseApp(Flask):
         @self.route('/{}/join'.format(self.cfg['web_context']), methods=['POST'])
         def join():
             return self.join(session, request)
+
+        @self.route('/{}/chatroom'.format(self.cfg['web_context']))
+        def get_chatroom():
+            return self.get_chatroom(session, request)
 
     def get_static(self, path):
         return send_from_directory('static', path)
@@ -276,3 +335,56 @@ class BaseApp(Flask):
                 chatroom_id=data['chatroom'].id,
                 is_first_user=(data['chatroom'].initiator == user_id)
             )
+
+    def get_chatroom(self, session, request):
+        params = request.args.to_dict()
+        if 'clientTabId' not in params or 'id' not in params or 'timestamp' not in params:
+            return '', 400
+        client_tab_id = params.get('clientTabId')
+        chatroom_id = params.get('id')
+        client_timestamp = params.get('timestamp')
+        user_id = session.sid + '_' + client_tab_id
+        data = self.api.get_chatroom(chatroom_id, user_id, client_timestamp if client_timestamp != '' else None)
+        response = "{}"
+        if data is not None:
+            if data == "expired":
+                response = '{"msg": "poll expired"}'
+            else:
+                response = self._get_chatroom_response(user_id, data)
+        return jsonify(response)
+
+    def _get_chatroom_response(self, user_id, data):
+        formatted_events = [events_for_user(evt, user_id) for evt in data['chatroom'].events]
+        try:
+            response = render_template(
+                'chatroom.json',
+                chatroom_id=data['chatroom'].id,
+                experiment_id=data['chatroom'].experiment_id,
+                users=json.dumps(data['chatroom'].users),
+                created=data['chatroom'].created,
+                modified=data['chatroom'].modified,
+                initiator="self" if data['chatroom'].initiator == user_id else "other",
+                closed="true" if data['chatroom'].closed else "false",
+                events=json.dumps(formatted_events, ensure_ascii=False),
+                msg_count_low=data['msg_count_low'],
+                msg_count_high=data['msg_count_high'],
+                poll_interval=data['poll_interval'],
+                delay_for_partner=data['delay_for_partner']
+            )
+        except TemplateNotFound:
+            response = render_template(
+                'default_chatroom.json',
+                chatroom_id=data['chatroom'].id,
+                experiment_id=data['chatroom'].experiment_id,
+                users=json.dumps(data['chatroom'].users),
+                created=data['chatroom'].created,
+                modified=data['chatroom'].modified,
+                initiator="self" if data['chatroom'].initiator == user_id else "other",
+                closed="true" if data['chatroom'].closed else "false",
+                events=json.dumps(formatted_events, ensure_ascii=False),
+                msg_count_low=data['msg_count_low'],
+                msg_count_high=data['msg_count_high'],
+                poll_interval=data['poll_interval'],
+                delay_for_partner=data['delay_for_partner']
+            )
+        return response
