@@ -3,4 +3,7 @@ logging.conf
 App.py
 logs/*
 .venv
+build/*
+dist/*
+chat_collection_framework.egg-info/*
 todo.txt
