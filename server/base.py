@@ -3,9 +3,12 @@ import dateutil.parser
 from flask import Flask, jsonify, render_template, request, send_from_directory, session
 from flask_session import Session
 from jinja2.exceptions import TemplateNotFound
+import jinja2
 import json
+import os
 from pathlib import Path
 import pytz
+import sys
 import threading
 import time
 import uuid
@@ -388,6 +391,13 @@ class BaseApp(Flask):
 
     def __init__(self, import_name, api):
         Flask.__init__(self, import_name)
+
+        my_loader = jinja2.ChoiceLoader([
+            self.jinja_loader,
+            jinja2.FileSystemLoader(os.path.join(sys.prefix, 'templates')),
+        ])
+        self.jinja_loader = my_loader
+
         self.api = api
         self.cfg = api.cfg
         self.logger = api.logger
