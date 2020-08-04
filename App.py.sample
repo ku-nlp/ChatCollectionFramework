@@ -1,6 +1,6 @@
 from flask import render_template, session
-from server.utils import load_config
 from server.base import BaseApi, BaseApp
+import json
 import logging
 import logging.config
 
@@ -14,7 +14,8 @@ if __name__ == '__main__':
     parser.add_argument("--log_config", help="Log configuration file.", type=str, default="logging.conf")
     args = parser.parse_args(args=None)
 
-    cfg = load_config()
+    with open(args.config, encoding='utf-8') as f:
+        cfg = json.load(f)
 
     
     class Api(BaseApi):
