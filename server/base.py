@@ -391,7 +391,7 @@ class BaseApp(Flask):
 
     def __init__(self, import_name, api):
         Flask.__init__(self, import_name)
-
+        
         my_loader = jinja2.ChoiceLoader([
             self.jinja_loader,
             jinja2.FileSystemLoader(os.path.join(sys.prefix, 'templates')),
@@ -414,6 +414,10 @@ class BaseApp(Flask):
         @self.route('/{}/static/<path:path>'.format(self.cfg['web_context']))
         def get_static(path):
             return self.get_static(path)
+
+        @self.route('/{}/default_static/<path:path>'.format(self.cfg['web_context']))
+        def get_default_static(path):
+            return self.get_default_static(path)
 
         @self.route('/{}/version'.format(self.cfg['web_context']))
         def version():
@@ -445,6 +449,9 @@ class BaseApp(Flask):
 
     def get_static(self, path):
         return send_from_directory('static', path)
+
+    def get_default_static(self, path):
+        return send_from_directory(os.path.join(sys.prefix, 'static'), path)
 
     def version(self):
         version = self.api.version()

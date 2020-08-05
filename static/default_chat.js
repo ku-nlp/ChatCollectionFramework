@@ -48,7 +48,7 @@ $(document).ready(function() {
         }
         var width = (msgCountSelf + msgCountOther) / (MSG_COUNT_HIGH * 2);
         width = width * 90;
-        $('img#chat-progressbar').attr('src', 'static/images/' + color + '.png');
+        $('img#chat-progressbar').attr('src', 'default_static/images/' + color + '.png');
         $('img#chat-progressbar').attr('title', progressTitleMsg);
         $('img#chat-progressbar').attr('width', width + '%');
     }

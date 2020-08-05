@@ -18,6 +18,8 @@ setuptools.setup(
             'static/default_chat.js', 
             'static/default_style.css',
             'static/default_utils.js',
+        ]),
+        ('static/images', [
             'static/images/bubbles.png',
             'static/images/green.png',
             'static/images/paper.jpg',

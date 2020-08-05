@@ -3,11 +3,11 @@
 <head>
     <meta charset="utf-8">
     <title>チャットサーバー</title>
-    <link rel="stylesheet" href="static/default_style.css">
+    <link rel="stylesheet" href="default_static/default_style.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-    <script src="static/default_utils.js"></script>
+    <script src="default_static/default_utils.js"></script>
     <script>
         var clientTabId = '{{ client_tab_id }}';
 
@@ -27,7 +27,7 @@
         var timeoutInMs = {{ poll_interval }} * 1000;
         var mainBoxMargin = '{% if experiment_id %}180px{% else %}100px{% endif %}';
     </script>
-    <script src="static/default_chat.js"></script>
+    <script src="default_static/default_chat.js"></script>
 </head>
 <body class="column fixed-height">
     <h2>チャットルーム</h2>
@@ -69,7 +69,7 @@
                             </div>
                         </form>
                         <div id="chat-progress">
-                            <span id="chat-progress-left"><img src="static/images/bubbles.png" alt="会話プログレス" title="このプログレスバーはチャットの長さが十分なものかを示しています。プログレスバーの色が緑色になるまで対話を続けて下さい。" height="20" width="27"></img></span>
+                            <span id="chat-progress-left"><img src="default_static/images/bubbles.png" alt="会話プログレス" title="このプログレスバーはチャットの長さが十分なものかを示しています。プログレスバーの色が緑色になるまで対話を続けて下さい。" height="20" width="27"></img></span>
                             <span id="chat-progress¯right"><img id="chat-progressbar" height="6"/></img></span>
                         </div>
                     </div>
