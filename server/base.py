@@ -162,7 +162,7 @@ class BaseApi:
         }
 
     def join(self, user_id, attribs=dict()):
-        self.logger.debug("join user={0}".format(user_id))
+        self.logger.debug("join user={0} attribs={1}".format(user_id, attribs))
         self.mutex.acquire()
         try:
             user = self.user_class(user_id, attribs)

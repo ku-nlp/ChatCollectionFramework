@@ -9,7 +9,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description="Launch the Server.",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--port", help="Listening port to handle requests.", type=int, default=8888)
+    parser.add_argument("--port", help="Listening port to handle requests.", type=int, default=8993)
     parser.add_argument("--config", help="Location of config file.", type=str, default="config.json")
     parser.add_argument("--log_config", help="Log configuration file.", type=str, default="logging.conf")
     args = parser.parse_args(args=None)
