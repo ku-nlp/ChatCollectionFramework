@@ -34,7 +34,7 @@ if __name__ == '__main__':
             BaseApp.__init__(self, import_name, api)
 
             # To add a new route:
-            # @self.route('/{}/test'.format(self.cfg['web_context']))
+            # @self.route(f'/{self.cfg['web_context']}/test')
             # def test():
             #     return "test: new view"
 
@@ -53,5 +53,5 @@ if __name__ == '__main__':
     logger = logging.getLogger('default')
     api = Api(cfg, logger)
     app = App(__name__, api)
-    logger.info("Starting server on port {0}...".format(args.port))
+    logger.info(f"Starting server on port {args.port}...")
     app.run(host='0.0.0.0', port=args.port, debug=False, threaded=True)

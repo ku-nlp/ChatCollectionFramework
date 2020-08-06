@@ -11,32 +11,45 @@
 </head>
 <body class="column small-font">
     <h2>チャットサーバー (対話: {{experiment_id}})</h2>
-    <h3>チャットルーム ({{chatrooms|length}})</h3>
+    <h3>チャットルーム(Active) ({{chatrooms|length}})</h3>
     <div id="main-box">
         <table id="chatrooms">
             <tr><th>チャットルーム</th><th>ユーザー</th><th>メッセージ</th><th>作成時間</th><th>変更時間</th><th>ポール時間</th><th>ポール数</th></tr>
             {% for chatroom in chatrooms %}
                 <tr>
                     <td><span class="selectable">{{chatroom.id}}</span></td>
-                    <td>{% for user_id in chatroom.users %}<span class="selectable">{{ user_id }}</span><br/>{% endfor %}</td>
+                    <td>{% for user_id in chatroom.users %}<span class="selectable"><strong>U{{ loop.index }}</strong>: <span class="selectable">{{ user_id }}</span><br/>{% endfor %}</td>
                     <td>{{chatroom.events}}</td>
                     <td><span class="selectable">{{utc_to_local(chatroom.created)}}</span></td>
                     <td><span class="selectable">{{utc_to_local(chatroom.modified)}}</span></td>
-                    <td>{% for user_id in chatroom.users %}<span class="selectable">{{ user_id }}</span>: <span class="selectable">{{utc_to_local(chatroom.poll_requests[user_id][-1])}}</span><br/>{% endfor %}</td>
-                <td>{% for user_id in chatroom.users %}<span class="selectable">{{ user_id }}</span>: <span class="selectable">{{chatroom.poll_requests[user_id]|length}}</span><br/>{% endfor %}</td>
+                    {% if chatroom.users|length == 2 %}
+                        <td>{% for user_id in chatroom.users %}<strong>U{{ loop.index }}</strong>: <span class="selectable">{{utc_to_local(chatroom.poll_requests[user_id][-1])}}</span><br/>{% endfor %}</td>
+                        <td>{% for user_id in chatroom.users %}<strong>U{{ loop.index }}</strong>: <span class="selectable">{{chatroom.poll_requests[user_id]|length}}</span><br/>{% endfor %}</td>
+                    {% else %}
+                        <td>{% for user_id in chatroom.users %}<span class="selectable">{{utc_to_local(chatroom.poll_requests[user_id][-1])}}</span><br/>{% endfor %}</td>
+                        <td>{% for user_id in chatroom.users %}<span class="selectable">{{chatroom.poll_requests[user_id]|length}}</span><br/>{% endfor %}</td>
+                    {% endif %}
                 </tr>
             {% endfor %}
+        </table>
+    </div>
+    <br/>
+    <br/>
+    <h3>チャットルーム(Disactive) ({{released_chatrooms|length}}</h3>
+    <div id="main-box">
+        <table id="chatrooms">
+            <tr><th>チャットルーム</th><th>ユーザー</th><th>メッセージ</th><th>作成時間</th><th>変更時間</th><th>ポール時間</th><th>ポール数</th></tr>
             {%  for released_chatroom in released_chatrooms %}
                 <tr>
                     <td><span class="selectable">{{released_chatroom.id}}</span></td>
-                    <td><span class="selectable">-</span></td>
+                    <td><span class="selectable">{% for str_user, user_info in released_chatroom.leaved_users.items() %}</span></td>
                     <td>{{released_chatroom.events}}</td>
                     <td><span class="selectable">{{utc_to_local(released_chatroom.created)}}</span></td>
                     <td><span class="selectable">{{utc_to_local(released_chatroom.modified)}}</span></td>
-                    <td><span class="selectable">-</span></td>
-                    <td><span class="selectable">-</span></td>
-            {% endfor %}
+                    <td><span class="selectable">{% for str_user, user_info in released_chatroom.leaved_users.items() %}</span></td>
+                    <td><span class="selectable">{% for str_user, user_info in released_chatroom.leaved_users.items() %}</span></td>
                 </tr>
+            {% endfor %}
         </table>
     </div>
 </body>

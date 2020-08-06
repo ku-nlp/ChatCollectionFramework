@@ -27,13 +27,14 @@ def events_for_user(evt, user_id):
     return event_for_user
 
 def utc_to_local(utc_timestamp):
-    return datetime.fromisoformat("{}+00:00".format(utc_timestamp)).astimezone(tz).isoformat() if utc_timestamp else ""
+    return datetime.fromisoformat(f"{utc_timestamp}+00:00").astimezone(tz).isoformat() if utc_timestamp else ""
 
 def convert_chatroom_to_dict(chatroom):
     return {
         "id": chatroom.id,
         "experimentId": chatroom.experiment_id,
         "users": chatroom.users,
+        "leaved_users": chatroom.leaved_users,
         "created": chatroom.created,
         "modified": chatroom.modified,
         "initiator": chatroom.initiator,
@@ -65,12 +66,13 @@ class BaseUser(object):
 
 class BaseChatroom(object):
 
-    def __init__(self, id_=None, experiment_id=None, initiator=None):
+    def __init__(self, id_=None, experiment_id=None, initiator=None, attribs=dict()):
         self.id = id_
         self.created = datetime.utcnow().isoformat()
         self.modified = self.created
         self.events = []
         self.users = []
+        self.leaved_users = {}
         self.experiment_id = experiment_id
         self.initiator = initiator
         self.partner = None
@@ -78,12 +80,19 @@ class BaseChatroom(object):
         self.poll_requests = {}
         if initiator is not None:
             self.add_user(initiator)
+        self.attribs = attribs
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and self.id == other.id
 
     def add_event(self, event):
         timestamp = datetime.utcnow()
         self.events.append(event)
         self.modified = timestamp.isoformat()
-        # print("add_event modified={0}".format(self.modified))
+        # print(f"add_event modified={self.modified}")
         if 'from' in event:
             self.poll_requests[event['from']].append(self.modified)
 
@@ -162,7 +171,7 @@ class BaseApi:
         }
 
     def join(self, user_id, attribs=dict()):
-        self.logger.debug("join user={0} attribs={1}".format(user_id, attribs))
+        self.logger.debug(f"join user={user_id} attribs={attribs}")
         self.mutex.acquire()
         try:
             user = self.user_class(user_id, attribs)
@@ -190,7 +199,7 @@ class BaseApi:
                 self.chatrooms[chatroom.id] = chatroom
                 self.chatroom_locks[chatroom.id] = threading.Lock()
 
-            self.logger.debug("User {0} is assigned to chatroom {1}.".format(user_id, chatroom.id))
+            self.logger.debug(f"User {user_id} is assigned to chatroom {chatroom.id}.")
 
             data = self._get_chatroom_data(chatroom.id)
             return data
@@ -201,10 +210,7 @@ class BaseApi:
             self.mutex.release()
 
     def get_chatroom(self, chatroom_id, user_id, client_timestamp):
-        self.logger.debug("get_chatroom chatroom={0} user={1} client_timestamp={2}".format(chatroom_id,
-                                                                                           user_id,
-                                                                                           client_timestamp)
-                          )
+        self.logger.debug(f"get_chatroom chatroom={chatroom_id} user={user_id} client_timestamp={client_timestamp}")
 
         request_time = datetime.utcnow()
         while True:
@@ -221,12 +227,8 @@ class BaseApi:
                         return None
                     chatroom.has_polled(user_id, request_time.isoformat())
                     chatroom_has_changed = not client_timestamp or chatroom.has_changed(client_timestamp)
-                    self.logger.debug("user {0} checks if the chatroom has changed={1} "
-                                      "modified={2} vs client_timestamp={3}".format(user_id,
-                                                                                    chatroom_has_changed,
-                                                                                    chatroom.modified,
-                                                                                    client_timestamp)
-                                      )
+                    self.logger.debug(f"user {user_id} checks if the chatroom has changed={chatroom_has_changed} "
+                                      "modified={chatroom.modified} vs client_timestamp={client_timestamp}")
                     if chatroom_has_changed:
                         data = self._get_chatroom_data(chatroom_id)
                         return data
@@ -238,13 +240,13 @@ class BaseApi:
             # Otherwise, the poll requests will accumulate and make the web server crash.
             waiting_period = (datetime.utcnow() - request_time).total_seconds()
             if waiting_period >= (self.cfg['poll_interval']):
-                # self.logger.debug("Waiting period has expired: {0}".format(waiting_period))
+                # self.logger.debug(f"Waiting period has expired: {waiting_period}")
                 return "expired"
 
             time.sleep(1.0)
 
     def post_message(self, user_id, chatroom_id, message):
-        self.logger.debug("post_message user_id={0} chatroom_id={1} message={2}".format(user_id, chatroom_id, message))
+        self.logger.debug(f"post_message user_id={user_id} chatroom_id={chatroom_id} message={message}")
         if chatroom_id not in self.chatroom_locks:
             return
 
@@ -265,7 +267,7 @@ class BaseApi:
             chatroom_lock.release()
 
     def leave_chatroom(self, user_id, chatroom_id):
-        self.logger.debug("leave_chatroom user_id={0} chatroom_id={1}".format(user_id, chatroom_id))
+        self.logger.debug(f"leave_chatroom user_id={user_id} chatroom_id={chatroom_id}")
         self.mutex.acquire()
         try:
             data = self._leave_chatroom(user_id, chatroom_id)
@@ -289,24 +291,15 @@ class BaseApi:
                         for user_id in chatroom.users:
                             if user_id in chatroom.poll_requests.keys():
                                 last_poll = datetime.fromisoformat(chatroom.poll_requests[user_id][-1])
-                                self.logger.debug("now={0} type={1} last_poll={2} type={3}".format(now,
-                                                                                                   type(now),
-                                                                                                   last_poll,
-                                                                                                   type(last_poll))
-                                                  )
+                                self.logger.debug(f"now={now} type={type(now)} last_poll={last_poll} type={type(last_poll)}")
                                 delta = now - last_poll
                                 self.logger.debug(
-                                    'Check user {0}... Last poll: {1} Now: {2}'
-                                    ' Delta(s): {3}'.format(user_id,
-                                                            last_poll.isoformat(),
-                                                            now.isoformat(),
-                                                            delta.seconds)
+                                    'Check user {user_id}... Last poll: {last_poll.isoformat()} Now: {now.isoformat()}'
+                                    ' Delta(s): {delta.seconds}'
                                 )
                                 # To play safe, I use a larger value than poll_interval
                                 if delta.seconds > self.cfg['poll_interval'] * 3:
-                                    self.logger.debug(
-                                        "{0} has been inactive for too long. Let's kick him out of room {1}.".format(
-                                            user_id, chatroom_id))
+                                    self.logger.debug(f"{user_id} has been inactive for too long. Let's kick him out of room {chatroom_id}")
                                     inactive_users.append((user_id, chatroom_id))
                     finally:
                         chatroom_lock.release()
@@ -315,7 +308,7 @@ class BaseApi:
                 self._leave_chatroom(user_id, chatroom_id)
         finally:
             self.mutex.release()
-            self.logger.debug("clean_inactive_users performed in {0}".format(time.time() - start))
+            self.logger.debug(f"clean_inactive_users performed in {time.time() - start}")
 
     def _get_chatroom_data(self, chatroom_id):
         chatroom = self.chatrooms[chatroom_id]
@@ -348,43 +341,32 @@ class BaseApi:
         return data
 
     def _archive_dialog(self, chatroom_id):
-        self.logger.debug("Archiving dialog from chatroom {0}...".format(chatroom_id))
+        self.logger.debug(f"Archiving dialog from chatroom {chatroom_id}...")
 
         creation_date = dateutil.parser.parse(self.chatrooms[chatroom_id].created)
 
         tz = pytz.timezone('Asia/Tokyo')
 
-        dialog_dir = "{0}/{1}/{2:0>2d}/{3:0>2d}".format(self.cfg['archives'], creation_date.year,
-                                                        creation_date.month, creation_date.day)
+        dialog_dir = f"{self.config['archives']}/{creation_date.year}/{creation_date.month:02}/{creation_date.day:02}"
         Path(dialog_dir).mkdir(parents=True, exist_ok=True)
-        dialog_filename = '{0}.txt'.format(chatroom_id)
-        with open("{0}/{1}".format(dialog_dir, dialog_filename), "w") as output_file:
+        dialog_filename = f'{chatroom_id}.txt'
+        with open(f"{dialog_dir}/{dialog_filename}", "w") as output_file:
             if self.chatrooms[chatroom_id].experiment_id:
-                output_file.write("Experiment: {0}\n".format(self.chatrooms[chatroom_id].experiment_id))
-            self.logger.debug("initiator={0} exists? {1}".format(
-                self.chatrooms[chatroom_id].initiator,
-                self.chatrooms[chatroom_id].initiator in self.users)
-            )
+                output_file.write(f"Experiment: {self.chatrooms[chatroom_id].experiment_id}\n")
+            self.logger.debug(f"initiator={self.chatrooms[chatroom_id].initiator} exists? {self.chatrooms[chatroom_id].initiator in self.users}")
             initiator = self.users[self.chatrooms[chatroom_id].initiator]
-            output_file.write(
-                "Params(U1): attribs: {0}\n".format(initiator.attribs)
-            )
-            self.logger.debug("partner={0} exists? {1}".format(
-                self.chatrooms[chatroom_id].partner,
-                self.chatrooms[chatroom_id].partner in self.users)
-            )
+            output_file.write(f"Params(U1): attribs: {initiator.attribs}\n")
+            self.logger.debug(f"partner={self.chatrooms[chatroom_id].partner} exists? {self.chatrooms[chatroom_id].partner in self.users}")
             if self.chatrooms[chatroom_id].partner:
                 partner = self.users[self.chatrooms[chatroom_id].partner]
-                output_file.write(
-                    "Params(U2): attribs: {0}\n".format(partner.attribs)
-                )
+                output_file.write(f"Params(U2): attribs: {partner.attribs}\n")
             for evt in self.chatrooms[chatroom_id].events:
-                str_from = "U{0}".format(1 if evt['from'] == self.chatrooms[chatroom_id].initiator else 2)
-                timestamp = datetime.fromisoformat("{}+00:00".format(evt['timestamp'])).astimezone(tz).isoformat()
-                output_file.write("{0}|{1}: {2}\n".format(timestamp, str_from, evt['body']))
+                str_from = f"U{1 if evt['from'] == self.chatrooms[chatroom_id].initiator else 2}"
+                timestamp = datetime.fromisoformat(f"{evt['timestamp']}+00:00").astimezone(tz).isoformat()
+                output_file.write(f"{timestamp}|{str_from}: {evt['body']}\n")
                 if 'checked' in evt and (evt['checked']):
-                    output_file.write("checked: {0}\n".format(evt['checked']))
-        self.logger.debug("Dialog has been archived in {0}/{1}".format(dialog_dir, dialog_filename))
+                    output_file.write(f"checked: {evt['checked']}\n")
+        self.logger.debug(f"Dialog has been archived in {dialog_dir}/{dialog_filename}")
 
 
 class BaseApp(Flask):
@@ -411,39 +393,39 @@ class BaseApp(Flask):
         self.config.from_object(self)
         Session(self)
 
-        @self.route('/{}/static/<path:path>'.format(self.cfg['web_context']))
+        @self.route(f"/{self.cfg['web_context']}/static/<path:path>")
         def get_static(path):
             return self.get_static(path)
 
-        @self.route('/{}/default_static/<path:path>'.format(self.cfg['web_context']))
+        @self.route(f"/{self.cfg['web_context']}/default_static/<path:path>")
         def get_default_static(path):
             return self.get_default_static(path)
 
-        @self.route('/{}/version'.format(self.cfg['web_context']))
+        @self.route(f"/{self.cfg['web_context']}/version")
         def version():
             return self.version()
 
-        @self.route('/{}/index'.format(self.cfg['web_context']))
+        @self.route(f"/{self.cfg['web_context']}/index")
         def index():
             return self.index()
 
-        @self.route('/{}/admin'.format(self.cfg['web_context']))
+        @self.route(f"/{self.cfg['web_context']}/admin")
         def admin():
             return self.admin()
 
-        @self.route('/{}/join'.format(self.cfg['web_context']), methods=['POST'])
+        @self.route(f"/{self.cfg['web_context']}/join", methods=['POST'])
         def join():
             return self.join(session, request)
 
-        @self.route('/{}/chatroom'.format(self.cfg['web_context']))
+        @self.route(f"/{self.cfg['web_context']}/chatroom")
         def get_chatroom():
             return self.get_chatroom(session, request)
 
-        @self.route('/{}/post'.format(self.cfg['web_context']), methods=['POST'])
+        @self.route(f"/{self.cfg['web_context']}/post", methods=['POST'])
         def post_message():
             return self.post_message(session, request)
 
-        @self.route('/{}/leave'.format(self.cfg['web_context']))
+        @self.route(f"/{self.cfg['web_context']}/leave")
         def leave_chatroom():
             return self.leave_chatroom(session, request)
 
@@ -456,15 +438,15 @@ class BaseApp(Flask):
     def version(self):
         version = self.api.version()
         try:
-            return render_template('version.html', version=version)
+            return render_template(template_name_or_list='version.html', version=version)
         except TemplateNotFound:
-            return render_template('default_version.html', version=version)
+            return render_template(template_name_or_list='default_version.html', version=version)
 
     def index(self):
         try:
-            return render_template('index.html')
+            return render_template(template_name_or_list='index.html')
         except TemplateNotFound:
-            return render_template('default_index.html')
+            return render_template(template_name_or_list='default_index.html')
 
     def admin(self):
         data = self.api.get_chatrooms()
@@ -473,14 +455,14 @@ class BaseApp(Flask):
                                 for released_chatrooms in data['released_chatrooms']]
         try:
             return render_template(
-                'admin.html',
+                template_name_or_list='admin.html',
                 chatrooms=chatrooms,
                 released_chatrooms=released_chatrooms,
                 experiment_id=self.cfg['experiment_id'],
                 utc_to_local=utc_to_local)
         except TemplateNotFound:
             return render_template(
-                'default_admin.html',
+                template_name_or_list='default_admin.html',
                 chatrooms=chatrooms,
                 released_chatrooms=released_chatrooms,
                 experiment_id=self.cfg['experiment_id'],
@@ -491,11 +473,11 @@ class BaseApp(Flask):
             return '', 400
 
         client_tab_id = request.form['clientTabId']
-        user_id = session.sid + '_' + client_tab_id
+        user_id = f'{session.sid}_{client_tab_id}'
         data = self.api.join(user_id)
         try:
             return render_template(
-                'chatroom.html',
+                template_name_or_list='chatroom.html',
                 client_tab_id=client_tab_id,
                 msg_count_low=data['msg_count_low'],
                 msg_count_high=data['msg_count_high'],
@@ -508,7 +490,7 @@ class BaseApp(Flask):
             )
         except TemplateNotFound:
             return render_template(
-                'default_chatroom.html',
+                template_name_or_list='default_chatroom.html',
                 client_tab_id=client_tab_id,
                 msg_count_low=data['msg_count_low'],
                 msg_count_high=data['msg_count_high'],
@@ -566,7 +548,7 @@ class BaseApp(Flask):
         formatted_events = [events_for_user(evt, user_id) for evt in data['chatroom'].events]
         try:
             response = render_template(
-                'chatroom.json',
+                template_name_or_list='chatroom.json',
                 chatroom_id=data['chatroom'].id,
                 experiment_id=data['chatroom'].experiment_id,
                 users=json.dumps(data['chatroom'].users),
@@ -582,7 +564,7 @@ class BaseApp(Flask):
             )
         except TemplateNotFound:
             response = render_template(
-                'default_chatroom.json',
+                template_name_or_list='default_chatroom.json',
                 chatroom_id=data['chatroom'].id,
                 experiment_id=data['chatroom'].experiment_id,
                 users=json.dumps(data['chatroom'].users),
