@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="chat-collection-framework",
-    version="0.1.0",
+    version="0.2.0",
     author="Frederic Bergeron",
     author_email="bergeron@nlp.ist.i.kyoto-u.ac.jp",
     description="A simple framework to implement a basic chat web application.",
