@@ -347,7 +347,7 @@ class BaseApi:
 
         tz = pytz.timezone('Asia/Tokyo')
 
-        dialog_dir = f"{self.config['archives']}/{creation_date.year}/{creation_date.month:02}/{creation_date.day:02}"
+        dialog_dir = f"{self.cfg['archives']}/{creation_date.year}/{creation_date.month:02}/{creation_date.day:02}"
         Path(dialog_dir).mkdir(parents=True, exist_ok=True)
         dialog_filename = f'{chatroom_id}.txt'
         with open(f"{dialog_dir}/{dialog_filename}", "w") as output_file:
