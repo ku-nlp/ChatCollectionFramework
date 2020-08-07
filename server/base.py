@@ -81,7 +81,6 @@ class BaseChatroom(object):
         self.leaved_users = {}
         self.experiment_id = experiment_id
         self.initiator = initiator
-        self.partner = None
         self.closed = False
         self.poll_requests = {}
         if initiator is not None:
@@ -104,11 +103,10 @@ class BaseChatroom(object):
 
     def add_user(self, user):
         timestamp = datetime.utcnow()
+        self.modified = timestamp.isoformat()
         self.users.append(user)
         if len(self.users) == 2:
             self.closed = True
-            self.partner = user
-        self.modified = timestamp.isoformat()
         self.poll_requests[user] = [self.modified]
 
     def remove_user(self, user):
@@ -355,23 +353,14 @@ class BaseApi:
 
         dialog_dir = f"{self.cfg['archives']}/{creation_date.year}/{creation_date.month:02}/{creation_date.day:02}"
         Path(dialog_dir).mkdir(parents=True, exist_ok=True)
-        dialog_filename = f'{chatroom_id}.txt'
-        with open(f"{dialog_dir}/{dialog_filename}", "w") as output_file:
+        dialog_filename = f"{chatroom_id}.txt"
+        with open(f"{dialog_dir}/{dialog_filename}", mode="w") as output_file:
             if self.chatrooms[chatroom_id].experiment_id:
                 output_file.write(f"Experiment: {self.chatrooms[chatroom_id].experiment_id}\n")
-            self.logger.debug(f"initiator={self.chatrooms[chatroom_id].initiator} exists? {self.chatrooms[chatroom_id].initiator in self.users}")
-            initiator = self.users[self.chatrooms[chatroom_id].initiator]
-            output_file.write(f"Params(U1): attribs: {initiator.attribs}\n")
-            self.logger.debug(f"partner={self.chatrooms[chatroom_id].partner} exists? {self.chatrooms[chatroom_id].partner in self.users}")
-            if self.chatrooms[chatroom_id].partner:
-                partner = self.users[self.chatrooms[chatroom_id].partner]
-                output_file.write(f"Params(U2): attribs: {partner.attribs}\n")
             for evt in self.chatrooms[chatroom_id].events:
                 str_from = f"U{1 if evt['from'] == self.chatrooms[chatroom_id].initiator else 2}"
                 timestamp = datetime.fromisoformat(f"{evt['timestamp']}+00:00").astimezone(tz).isoformat()
                 output_file.write(f"{timestamp}|{str_from}: {evt['body']}\n")
-                if 'checked' in evt and (evt['checked']):
-                    output_file.write(f"checked: {evt['checked']}\n")
         self.logger.debug(f"Dialog has been archived in {dialog_dir}/{dialog_filename}")
 
 
