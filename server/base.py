@@ -16,6 +16,12 @@ import uuid
 
 tz = pytz.timezone('Asia/Tokyo')
 
+evt_type = {
+    'action',
+    'command',
+    'msg'
+}
+
 def events_for_user(evt, user_id):
     event_for_user = {
         'from': 'self' if evt['from'] == user_id else 'other',
@@ -294,8 +300,8 @@ class BaseApi:
                                 self.logger.debug(f"now={now} type={type(now)} last_poll={last_poll} type={type(last_poll)}")
                                 delta = now - last_poll
                                 self.logger.debug(
-                                    'Check user {user_id}... Last poll: {last_poll.isoformat()} Now: {now.isoformat()}'
-                                    ' Delta(s): {delta.seconds}'
+                                    f"Check user {user_id}... Last poll: {last_poll.isoformat()} Now: {now.isoformat()}"
+                                    " Delta(s): {delta.seconds}"
                                 )
                                 # To play safe, I use a larger value than poll_interval
                                 if delta.seconds > self.cfg['poll_interval'] * 3:
@@ -373,7 +379,7 @@ class BaseApp(Flask):
 
     def __init__(self, import_name, api):
         Flask.__init__(self, import_name)
-        
+
         my_loader = jinja2.ChoiceLoader([
             self.jinja_loader,
             jinja2.FileSystemLoader(os.path.join(sys.prefix, 'templates')),
@@ -508,7 +514,7 @@ class BaseApp(Flask):
         client_tab_id = params.get('clientTabId')
         chatroom_id = params.get('id')
         client_timestamp = params.get('timestamp')
-        user_id = session.sid + '_' + client_tab_id
+        user_id = f'{session.sid}_{client_tab_id}'
         data = self.api.get_chatroom(chatroom_id, user_id, client_timestamp if client_timestamp != '' else None)
         response = "{}"
         if data is not None:
@@ -524,7 +530,7 @@ class BaseApp(Flask):
         client_tab_id = request.form['clientTabId']
         chatroom_id = request.form['chatroom']
         message = request.form['message']
-        user_id = session.sid + '_' + client_tab_id
+        user_id = f'{session.sid}_{client_tab_id}'
         data = self.api.post_message(user_id, chatroom_id, message)
         response = "{}"
         if data is not None:
@@ -537,7 +543,7 @@ class BaseApp(Flask):
             return '', 400
         client_tab_id = params.get('clientTabId')
         chatroom_id = params.get('chatroom')
-        user_id = session.sid + '_' + client_tab_id
+        user_id = f'{session.sid}_{client_tab_id}'
         data = self.api.leave_chatroom(user_id, chatroom_id)
         response = "{}"
         if data is not None:
