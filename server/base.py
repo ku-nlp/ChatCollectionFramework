@@ -11,6 +11,7 @@ import pytz
 import sys
 import threading
 import time
+import traceback
 import uuid
 
 
@@ -111,6 +112,16 @@ class BaseChatroom(object):
 
     def remove_user(self, user):
         if user in self.users:
+            if len(self.leaved_users) == 0:
+                str_user = f"U{self.users.index(user) + 1}"
+            else:
+                str_user = 'U2' if 'U1' in self.leaved_users else 'U1'
+            self.leaved_users[str_user] = {
+                'user_id': user,
+                'last_poll': self.poll_requests[user][-1],
+                'poll_num': len(self.poll_requests[user])
+            }
+
             self.users.remove(user)
             self.modified = datetime.utcnow().isoformat()
             if user in self.poll_requests:
@@ -262,7 +273,12 @@ class BaseApi:
             chatroom = self.chatrooms[chatroom_id]
             if user_id not in chatroom.users:
                 return
-            evt = {'type': 'msg', 'from': user_id, 'body': message, 'timestamp': datetime.utcnow().isoformat()}
+            evt = {
+                'type': 'msg',
+                'from': user_id,
+                'body': message,
+                'timestamp': datetime.utcnow().isoformat()
+            }
             chatroom.add_event(evt)
 
             data = self._get_chatroom_data(chatroom_id)
