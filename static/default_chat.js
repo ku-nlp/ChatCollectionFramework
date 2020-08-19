@@ -183,7 +183,7 @@ function stopDialog() {
     $('#message-try-later').hide();
     $('#chatbox').removeClass('shadowed');
     var mainBoxHeight = $('#main-box').css('height');
-    $('#main-box').css('height', 'calc(' + mainBoxHeight + ' - ' + mainBoxMargin);
+    $('#main-box').css('height', 'calc(' + mainBoxHeight + ' - ' + mainBoxMargin + ')');
     $('#messages').prop('scrollTop', 1000000);
     isDialogOver = true;
 }
@@ -229,7 +229,7 @@ function pollServer() {
                     $('#controls').hide();
                     $('#chatbox').removeClass('shadowed');
                     var mainBoxHeight = $('#main-box').css('height');
-                    $('#main-box').css('height', 'calc(' + mainBoxHeight + ' - ' + mainBoxMargin);
+                    $('#main-box').css('height', 'calc(' + mainBoxHeight + ' - ' + mainBoxMargin + ')');
                     if (!stopChatConfirmed) {
                         $('#stop-chat').hide();
                         $('#message-chat-over').show();
@@ -398,7 +398,7 @@ function stopChat() {
                                 $('#console').hide();
                             $('#chatbox').removeClass('shadowed');
                             var mainBoxHeight = $('#main-box').css('height');
-                            $('#main-box').css('height', 'calc(' + mainBoxHeight + ' - ' + mainBoxMargin);
+                            $('#main-box').css('height', 'calc(' + mainBoxHeight + ' - ' + mainBoxMargin + ')');
                             $('#messages').prop('scrollTop', 1000000);
                         }
                         else
