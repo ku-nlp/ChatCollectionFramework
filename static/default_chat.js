@@ -1,3 +1,9 @@
+//
+// The code here is loaded after default_chat_prologue.js and 
+// before default_chat_epilogue.js
+//
+console.log('Loading default_chat.js...');
+
 var isTooShortDialogShown = false;
 var isTooLongDialogShown = false;
 
@@ -18,7 +24,7 @@ var waitingInterval = null;
 var isDialogStarted = false;
 var isDialogOver = false;
 
-function updateProgress() {
+function updateProgress(data) {
     var color;
     var progressTitleMsg;
     var msgCountSelf = getMessageCountFor('self');
@@ -78,7 +84,7 @@ function updateModel(data) {
         else
             events.push(latestEvents[i]);
     }
-    updateProgress();
+    updateProgress(data);
 }
 
 function buildEntry(msg) {
@@ -460,7 +466,6 @@ window.addEventListener('beforeunload', function (e) {
 
 $(document).ready(function() {
     $('#message-chat-over').hide();
-    $('#send').on('click', sendMsg);
 
     $('.new-msg-field').on('keypress', function(e) {
         if (e.keyCode == 13 && !e.shiftKey) {
@@ -469,8 +474,6 @@ $(document).ready(function() {
         }
         return true;
     });
-
-    $('#stop-chat').on('click', stopChat);
 
     if (WAITING_FOR_PARTNER_DELAY > 0) {
         $('#chatbox-wrapper').hide();
@@ -484,3 +487,4 @@ $(document).ready(function() {
     pollServer();
 });
 
+console.log('default_chat.js loaded.');

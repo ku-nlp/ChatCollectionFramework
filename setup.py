@@ -15,7 +15,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     data_files=[
         ('static', [
-            'static/default_chat.js', 
+            'static/default_chat_prologue.js',
+            'static/default_chat.js',
+            'static/default_chat_epilogue.js',
             'static/default_style.css',
             'static/default_utils.js',
         ]),
@@ -27,7 +29,7 @@ setuptools.setup(
             'static/images/yellow.png'
         ]),
         ('templates', [
-            'templates/default_admin.html', 
+            'templates/default_admin.html',
             'templates/default_chatroom.html',
             'templates/default_chatroom.json',
             'templates/default_index.html',
