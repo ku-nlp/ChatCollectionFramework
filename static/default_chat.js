@@ -88,7 +88,7 @@ function updateModel(data) {
 }
 
 function buildEntry(msg) {
-    var msgClass = 'msg ' + (msg.from == 'self' && isFirstUser || msg.from != 'self' && !isFirstUser ? 'msg-left' : 'msg-right');
+    var msgClass = 'msg ' + (msg.from == 'self' ? 'msg-right' : 'msg-left');
     var user = (msg.from == 'self' ? 'あなた' : '相手');
     var timestamp = new Date(msg.timestamp.substring(0, msg.timestamp.indexOf('.')) + 'Z');
     var time = (timestamp.getHours() < 10 ? '0' + timestamp.getHours() : timestamp.getHours()) + ':' + 
