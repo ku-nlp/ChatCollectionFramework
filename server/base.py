@@ -243,7 +243,7 @@ class BaseApi:
                     chatroom.has_polled(user_id, request_time.isoformat())
                     chatroom_has_changed = not client_timestamp or chatroom.has_changed(client_timestamp)
                     self.logger.debug(f"user {user_id} checks if the chatroom has changed={chatroom_has_changed} "
-                                      "modified={chatroom.modified} vs client_timestamp={client_timestamp}")
+                                      f"modified={chatroom.modified} vs client_timestamp={client_timestamp}")
                     if chatroom_has_changed:
                         data = self._get_chatroom_data(chatroom_id)
                         return data
