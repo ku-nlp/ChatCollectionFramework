@@ -54,3 +54,24 @@ python App.py
 To stop the server:
 
 For now, hit CTRL + C.  Eventually, the server should run as a system-level service.
+
+
+## Building
+
+To build the framework package so that it can be used into another project:
+
+```sh
+rm -rf dist/*
+python setup.py clean --all
+python setup.py sdist bdist_wheel
+```
+
+This will build a wheel file that can be installed into a Python environment.
+
+To update the framework into another project (assuming you're outside the pipenv shell):
+
+```sh
+pipenv uninstall chat_collection_framework
+pipenv lock --clear
+pipenv install --clear $CHAT_COLLECTION_FRAMEWORK/dist/chat_collection_framework-X.Y.Z-py3-none-any.whl
+```
