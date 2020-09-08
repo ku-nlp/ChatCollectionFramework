@@ -202,7 +202,7 @@ class BaseApi:
             user = self.user_class(user_id, attribs)
             self.users[user_id] = user
 
-            if self.cfg['prevent_multiple_tabs'] == 'True':
+            if 'prevent_multiple_tabs' in self.cfg and self.cfg['prevent_multiple_tabs'] == 'True':
                 all_users = flatten([chatroom.users for chatroom in self.chatrooms.values()])
                 all_sessions = set([get_session_id(user_id) for user_id in all_users])
                 if get_session_id(user_id) in all_sessions:
