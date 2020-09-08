@@ -33,7 +33,8 @@ setuptools.setup(
             'templates/default_chatroom.html',
             'templates/default_chatroom.json',
             'templates/default_index.html',
-            'templates/default_version.html'
+            'templates/default_version.html',
+            'templates/default_errorForbiddenAccess.html'
         ])
     ],
     classifiers=[
