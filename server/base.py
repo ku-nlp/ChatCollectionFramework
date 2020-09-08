@@ -508,14 +508,7 @@ class BaseApp(Flask):
         data = self.api.join(user_id)
 
         if isinstance(data, str) and data.startswith("Error: MultipleTabAccessForbidden"):
-            try:
-                return render_template(
-                    template_name_or_list='errorForbiddenAccess.html'
-                )
-            except TemplateNotFound:
-                return render_template(
-                    template_name_or_list='default_errorForbiddenAccess.html'
-                )
+            return self.error_forbidden_access_multiple_tabs()
 
         try:
             return render_template(
@@ -585,6 +578,16 @@ class BaseApp(Flask):
         if data is not None:
             response = self._get_chatroom_response(user_id, data)
         return jsonify(response)
+
+    def error_forbidden_access_multiple_tabs(self):
+        try:
+            return render_template(
+                template_name_or_list='errorForbiddenAccess.html'
+            )
+        except TemplateNotFound:
+            return render_template(
+                template_name_or_list='default_errorForbiddenAccess.html'
+            )
 
     def _get_chatroom_response(self, user_id, data):
         formatted_events = [events_for_user(evt, user_id) for evt in data['chatroom'].events]
