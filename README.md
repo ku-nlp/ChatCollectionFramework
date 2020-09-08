@@ -31,6 +31,7 @@ chatroom_cleaning_interval: Delay (in secs) where the room cleanup will be perfo
 msg_count_low: Minimum number of messages before the is considered long enough.
 msg_count_high: Maximum number of messages before the chat is considered too long.
 experiment_id: Identifier of the experiment (can be used for user payment).
+prevent_multiple_tabs: If True, an error page will be shown if the user tries to use more than one tab to chat.
 
 ### Logging
 

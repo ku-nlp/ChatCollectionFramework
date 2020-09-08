@@ -23,6 +23,16 @@ evt_type = {
     'msg'
 }
 
+
+def flatten(l):
+    return [item for sublist in l for item in sublist]
+
+def get_session_id(user_id):
+    index_of_underscore = user_id.find('_')
+    if index_of_underscore == -1:
+        return user_id
+    return user_id[:index_of_underscore]
+
 def events_for_user(evt, user_id):
     event_for_user = {
         'from': 'self' if evt['from'] == user_id else 'other',
@@ -191,6 +201,12 @@ class BaseApi:
         try:
             user = self.user_class(user_id, attribs)
             self.users[user_id] = user
+
+            if self.cfg['prevent_multiple_tabs'] == 'True':
+                all_users = flatten([chatroom.users for chatroom in self.chatrooms.values()])
+                all_sessions = set([get_session_id(user_id) for user_id in all_users])
+                if get_session_id(user_id) in all_sessions:
+                    return f"Error: MultipleTabAccessForbidden for user: {user_id}."
 
             # Try to find an available partner.
             # If none is found, assign the user to a new chatroom.
@@ -444,7 +460,11 @@ class BaseApp(Flask):
         return send_from_directory('static', path)
 
     def get_default_static(self, path):
-        return send_from_directory(os.path.join(sys.prefix, 'static'), path)
+        abs_base_path = os.path.join(sys.prefix, 'static')
+        # Useful to test the framework as is.
+        if not os.path.isdir(abs_base_path):
+            abs_base_path = Path(sys.prefix).parent / 'static'
+        return send_from_directory(abs_base_path, path)
 
     def version(self):
         version = self.api.version()
@@ -486,6 +506,17 @@ class BaseApp(Flask):
         client_tab_id = request.form['clientTabId']
         user_id = f'{session.sid}_{client_tab_id}'
         data = self.api.join(user_id)
+
+        if isinstance(data, str) and data.startswith("Error: MultipleTabAccessForbidden"):
+            try:
+                return render_template(
+                    template_name_or_list='errorForbiddenAccess.html'
+                )
+            except TemplateNotFound:
+                return render_template(
+                    template_name_or_list='default_errorForbiddenAccess.html'
+                )
+
         try:
             return render_template(
                 template_name_or_list='chatroom.html',

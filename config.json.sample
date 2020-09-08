@@ -9,5 +9,6 @@
     "chatroom_cleaning_interval": 30,
     "msg_count_low": 5,
     "msg_count_high": 15,
-    "experiment_id": 123
+    "experiment_id": 123,
+    "prevent_multiple_tabs": "True"
 }
