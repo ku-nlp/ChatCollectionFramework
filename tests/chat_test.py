@@ -1,3 +1,4 @@
+import bs4
 import os
 import os.path
 import psutil
@@ -12,19 +13,21 @@ def run_command(command):
     return output
 
 
-def test_start_server():
-    server_process = subprocess.Popen(["python App.py"], shell=True)
+def test_version():
+    server_process = subprocess.Popen(["python App.py --config config.json.sample --log_config logging.conf.sample"], shell=True)
 
     try:
         print(f"server_process={server_process.pid}")
 
-        # Wait 10 seconds to make sure that the server has started properly.
+        # Wait a few seconds to make sure that the server has started properly.
         time.sleep(20)
 
-        # print(f"get_version: {run_command('curl http://127.0.0.1:8993/ChatCollectionFramework_frederic/version')}")
-        print(f"get_version: {run_command('curl http://127.0.0.1:8993/ChatCollectionServer/version')}")
+        resp = run_command('curl http://127.0.0.1:8993/ChatCollectionServer/version')
+        soup = bs4.BeautifulSoup(resp, 'html.parser')
+        body = soup.find('body')
+        version = body.string.strip()
 
-        # time.sleep(20)
+        assert version == 'Version: 1.0'
 
     finally:
         # Kill the server and its children processes.
