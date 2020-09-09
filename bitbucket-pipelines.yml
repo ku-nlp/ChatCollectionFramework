@@ -6,5 +6,6 @@ pipelines:
         caches:
           - pip
         script:
+          - pip install pipenv
           - pipenv shell
           - py.test -s
