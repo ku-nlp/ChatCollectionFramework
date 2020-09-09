@@ -8,4 +8,8 @@ pipelines:
         script:
           - pip install pipenv
           - pipenv sync
+          - cp App.py.sample App.py
+          - cp config.json.sample config.json
+          - cp logging.conf.sample logging.conf
+          - mkdir logs
           - pipenv run py.test -s
