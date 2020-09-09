@@ -1,10 +1,10 @@
 image: python:3.7.5
 
 pipelines:
-    default:
-        - step:
-            caches:
-                - pip
-            script:
-                - pipenv shell
-                - py.test -s
+  default:
+    - step:
+        caches:
+          - pip
+        script:
+          - pipenv shell
+          - py.test -s
