@@ -7,5 +7,4 @@ pipelines:
           - pip
         script:
           - pip install pipenv
-          - pipenv shell
-          - py.test -s
+          - pipenv run py.test -s
