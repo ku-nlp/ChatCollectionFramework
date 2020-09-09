@@ -36,6 +36,29 @@ def test_version():
         server_process.terminate()
 
 
+def test_index():
+    server_process = subprocess.Popen(["python App.py --config config.json.sample --log_config logging.conf.sample"], shell=True)
+
+    try:
+        # Wait a few seconds to make sure that the server has started properly.
+        time.sleep(20)
+
+        resp = run_command('curl http://127.0.0.1:8993/ChatCollectionServer/index')
+        soup = bs4.BeautifulSoup(resp, 'html.parser')
+        form = soup.find('form')
+        assert form['id'] == 'form-join'
+        assert form['action'] == 'join'
+        assert form['method'] == 'POST'
+
+    finally:
+        # Kill the server and its children processes.
+        parent = psutil.Process(server_process.pid)
+        children = parent.children(recursive=True)
+        for process in children:
+            process.send_signal(signal.SIGTERM)
+        server_process.terminate()
+
+
 def test_admin_no_users():
     server_process = subprocess.Popen(["python App.py --config config.json.sample --log_config logging.conf.sample"], shell=True)
 
@@ -66,4 +89,5 @@ def test_admin_no_users():
         for process in children:
             process.send_signal(signal.SIGTERM)
         server_process.terminate()
+
 
