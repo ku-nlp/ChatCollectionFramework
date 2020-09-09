@@ -17,8 +17,6 @@ def test_version():
     server_process = subprocess.Popen(["python App.py --config config.json.sample --log_config logging.conf.sample"], shell=True)
 
     try:
-        print(f"server_process={server_process.pid}")
-
         # Wait a few seconds to make sure that the server has started properly.
         time.sleep(20)
 
@@ -37,4 +35,35 @@ def test_version():
             process.send_signal(signal.SIGTERM)
         server_process.terminate()
 
-    assert 1 == 1
+
+def test_admin_no_users():
+    server_process = subprocess.Popen(["python App.py --config config.json.sample --log_config logging.conf.sample"], shell=True)
+
+    try:
+        # Wait a few seconds to make sure that the server has started properly.
+        time.sleep(20)
+
+        resp = run_command('curl http://127.0.0.1:8993/ChatCollectionServer/admin')
+        soup = bs4.BeautifulSoup(resp, 'html.parser')
+
+        h2 = soup.find('h2')
+        h2_text = h2.string.strip()
+        assert h2_text == 'チャットサーバー (対話: 123)'
+
+        h3s = soup.find_all('h3')
+        assert len(h3s) == 2
+
+        first_h3_text = h3s[0].string.strip()
+        assert first_h3_text == 'チャットルーム(Active) (0)'
+
+        second_h3_text = h3s[1].string.strip()
+        assert second_h3_text == 'チャットルーム(Disactive) (0)'
+
+    finally:
+        # Kill the server and its children processes.
+        parent = psutil.Process(server_process.pid)
+        children = parent.children(recursive=True)
+        for process in children:
+            process.send_signal(signal.SIGTERM)
+        server_process.terminate()
+
