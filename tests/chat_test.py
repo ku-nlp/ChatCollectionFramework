@@ -13,26 +13,25 @@ def run_command(command):
 
 
 def test_start_server():
-    print(f"which curl={run_command('which curl')}")
-    print(f"which wget={run_command('which wget')}")
+    server_process = subprocess.Popen(["python App.py"], shell=True)
 
-    # server_process = subprocess.Popen(["python App.py"], shell=True)
+    try:
+        print(f"server_process={server_process.pid}")
 
-    # try:
-    #     print(f"server_process={server_process.pid}")
+        # Wait 10 seconds to make sure that the server has started properly.
+        time.sleep(20)
 
-    #     # Wait 10 seconds to make sure that the server has started properly.
-    #     time.sleep(10)
+        # print(f"get_version: {run_command('curl http://127.0.0.1:8993/ChatCollectionFramework_frederic/version')}")
+        print(f"get_version: {run_command('curl http://127.0.0.1:8993/ChatCollectionServer/version')}")
 
-    # finally:
-    #     # Kill the server and its children processes.
-    #     parent = psutil.Process(server_process.pid)
-    #     children = parent.children(recursive=True)
-    #     for process in children:
-    #         process.send_signal(signal.SIGTERM)
-    #     server_process.terminate()
+        # time.sleep(20)
 
-
-
+    finally:
+        # Kill the server and its children processes.
+        parent = psutil.Process(server_process.pid)
+        children = parent.children(recursive=True)
+        for process in children:
+            process.send_signal(signal.SIGTERM)
+        server_process.terminate()
 
     assert 1 == 1
