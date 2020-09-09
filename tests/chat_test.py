@@ -13,30 +13,24 @@ def run_command(command):
 
 
 def test_start_server():
-    print(f"pwd={os.path.abspath(__file__)}")
-    print(f"cwd={os.getcwd()}")
-    print(f"listdir={os.listdir()}")
-    print(f"exists?={os.path.exists('App.py')}")
+    print(f"which curl={run_command('which curl')}")
+    print(f"which wget={run_command('which wget')}")
 
-    print(f"ls -l={run_command('ls -l')}")
-    print(f"which python={run_command('which python')}")
-    print(f"python --version={run_command('python --version')}")
+    # server_process = subprocess.Popen(["python App.py"], shell=True)
 
-    server_process = subprocess.Popen(["python App.py"], shell=True)
+    # try:
+    #     print(f"server_process={server_process.pid}")
 
-    try:
-        print(f"server_process={server_process.pid}")
+    #     # Wait 10 seconds to make sure that the server has started properly.
+    #     time.sleep(10)
 
-        # Wait 10 seconds to make sure that the server has started properly.
-        time.sleep(10)
-
-    finally:
-        # Kill the server and its children processes.
-        parent = psutil.Process(server_process.pid)
-        children = parent.children(recursive=True)
-        for process in children:
-            process.send_signal(signal.SIGTERM)
-        server_process.terminate()
+    # finally:
+    #     # Kill the server and its children processes.
+    #     parent = psutil.Process(server_process.pid)
+    #     children = parent.children(recursive=True)
+    #     for process in children:
+    #         process.send_signal(signal.SIGTERM)
+    #     server_process.terminate()
 
 
 
