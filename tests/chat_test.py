@@ -1,4 +1,5 @@
 import bs4
+from datetime import datetime
 import json
 import os
 import os.path
@@ -269,16 +270,20 @@ def test_admin_several_users():
         server_process.terminate()
 
 
-def test_admin_several_users_chatting_together():
+def test_several_users_chatting_together():
     server_process = subprocess.Popen(["python App.py --config config.json.sample --log_config logging.conf.sample"], shell=True)
 
     try:
         # Wait a few seconds to make sure that the server has started properly.
         time.sleep(START_SERVER_DELAY)
 
+        now = datetime.today().strftime('%Y-%m-%d')
+        year, month, day = now.split('-')
         user_count = 10
         msg_count = 80
         user_chatrooms = []
+        chatrooms = set()
+        msg_count_per_chatroom = {}
         for u in range(user_count):
             session_id = f'1234abcd-aaaa-bbbb-cccc-0000000000{u:02}'
             resp_user = run_command(f'curl -X POST http://127.0.0.1:8993/ChatCollectionServer/join -d "clientTabId=11111" --cookie "CGISESSID={session_id}"')
@@ -293,6 +298,7 @@ def test_admin_several_users_chatting_together():
             chatroom_id = get_chatroom_id(script_base)
 
             user_chatrooms.append(chatroom_id)
+            chatrooms.add(chatroom_id)
 
         for u in range(user_count):
             msg = greetings[randint(0, len(greetings) - 1)]
@@ -300,6 +306,11 @@ def test_admin_several_users_chatting_together():
             resp_greeting_msg = run_command(f'curl -X POST http://127.0.0.1:8993/ChatCollectionServer/post -d "clientTabId=11111" -d "chatroom={user_chatrooms[u]}" -d "message={msg}" --cookie "CGISESSID={session_id}"')
             resp_json = json.loads(resp_greeting_msg.strip().encode('utf-8').decode('unicode_escape')[1:-1])
             assert resp_json['id'] == user_chatrooms[u]
+
+            if user_chatrooms[u] not in msg_count_per_chatroom:
+                msg_count_per_chatroom[user_chatrooms[u]] = 1
+            else:
+                msg_count_per_chatroom[user_chatrooms[u]] += 1
 
         for m in range(msg_count):
             msg = messages[randint(0, len(messages) -1)]
@@ -309,12 +320,22 @@ def test_admin_several_users_chatting_together():
             resp_json = json.loads(resp_msg.strip().encode('utf-8').decode('unicode_escape')[1:-1])
             assert resp_json['id'] == user_chatrooms[user]
 
+            if user_chatrooms[user] not in msg_count_per_chatroom:
+                msg_count_per_chatroom[user_chatrooms[user]] = 1
+            else:
+                msg_count_per_chatroom[user_chatrooms[user]] += 1
+
         for u in range(user_count):
             msg = farewells[randint(0, len(farewells) - 1)]
             session_id = f'1234abcd-aaaa-bbbb-cccc-0000000000{u:02}'
             resp_farewell_msg = run_command(f'curl -X POST http://127.0.0.1:8993/ChatCollectionServer/post -d "clientTabId=11111" -d "chatroom={user_chatrooms[u]}" -d "message={msg}" --cookie "CGISESSID={session_id}"')
             resp_json = json.loads(resp_farewell_msg.strip().encode('utf-8').decode('unicode_escape')[1:-1])
             assert resp_json['id'] == user_chatrooms[u]
+
+            if user_chatrooms[u] not in msg_count_per_chatroom:
+                msg_count_per_chatroom[user_chatrooms[u]] = 1
+            else:
+                msg_count_per_chatroom[user_chatrooms[u]] += 1
 
         resp_admin = run_command('curl http://127.0.0.1:8993/ChatCollectionServer/admin')
         soup_admin = bs4.BeautifulSoup(resp_admin, 'html.parser')
@@ -334,6 +355,35 @@ def test_admin_several_users_chatting_together():
             total_msg_count += int(msg_count_cell.string)
 
         assert total_msg_count == user_count * 2 + msg_count
+
+        for u in range(user_count):
+            session_id = f'1234abcd-aaaa-bbbb-cccc-0000000000{u:02}'
+            resp_leave = run_command(f'curl --cookie "CGISESSID={session_id}" -G http://127.0.0.1:8993/ChatCollectionServer/leave -d clientTabId=11111 -d chatroom={user_chatrooms[u]}')
+            resp_json = json.loads(resp_leave.strip().encode('utf-8').decode('unicode_escape')[1:-1])
+            user_id = f'{session_id}_11111'
+            assert 'id' not in resp_json or resp_json['id'] == user_chatrooms[u] and 'users' not in resp_json or user_id not in resp_json['users']
+
+        # Wait a few seconds to make sure that the server has archived the dialogs.
+        time.sleep(START_SERVER_DELAY)
+
+        for chatroom_id in chatrooms:
+            dialog_filename = f"/tmp/dialogs/{year}/{month}/{day}/{chatroom_id}.txt"
+            assert os.path.isfile(dialog_filename)
+
+            msg_count_u1 = 0
+            msg_count_u2 = 0
+            with open(dialog_filename) as dialog_file:
+                for line in dialog_file:
+                    p = re.compile(r"^.+\|U([12]): .+$")
+                    m = p.match(line)
+                    if m:
+                        if m.group(1) == '1':
+                            msg_count_u1 += 1
+                        elif m.group(1) == '2':
+                            msg_count_u2 += 1
+
+            # Make sure that all messages are accounted for in the archived dialog files.
+            assert msg_count_u1 + msg_count_u2 == msg_count_per_chatroom[chatroom_id]
 
     finally:
         # Kill the server and its children processes.
