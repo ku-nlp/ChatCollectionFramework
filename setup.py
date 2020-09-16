@@ -13,6 +13,11 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://bitbucket.org/ku_nlp/chatcollectionframework",
     packages=setuptools.find_packages(),
+    install_requires=[
+        'flask-session',
+        'pytz',
+        'python-dateutil'
+    ],
     data_files=[
         ('static', [
             'static/default_chat_prologue.js',
