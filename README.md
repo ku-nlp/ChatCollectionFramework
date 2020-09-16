@@ -2,13 +2,18 @@
 
 ## Requirements
 
-- python-3.7
+- python-3.7.5
 
 To prepare the environment:
 
 ```sh
-pipenv sync --python /mnt/orange/brew/data/bin/python3.7
+pipenv sync
 ```
+
+## How to use
+
+Please read the doc/manual.md file.
+
 
 ## Configuration
 
@@ -61,6 +66,7 @@ For now, hit CTRL + C.  Eventually, the server should run as a system-level serv
 To build the framework package so that it can be used into another project:
 
 ```sh
+pipenv shell
 rm -rf dist/*
 python setup.py clean --all
 python setup.py sdist bdist_wheel
