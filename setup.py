@@ -18,6 +18,13 @@ setuptools.setup(
         'pytz',
         'python-dateutil'
     ],
+    extras_require=[
+        'tests': [
+            'pytest',
+            'psutil',
+            'bs4'
+        ]
+    ],
     data_files=[
         ('static', [
             'static/default_chat_prologue.js',
