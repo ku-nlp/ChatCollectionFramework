@@ -10,7 +10,31 @@ At this moment, the typical use case that is supported is a server to which clie
 
 Eventually, other use cases could be implemented.
 
-To demonstrate how the framework can be used, we will create a custom implementation of the dummy chat server.
+To demonstrate how the framework can be used, we will create a custom implementation of the dummy chat server.  But first, let's take an overview of the architecture of the ChatCollectionFramework.
+
+## Overview
+
+Here is at a glance how a chat collection web application using the framework should look like:
+
+![Webapp Overview](images/overview.png  "Webapp Overview")
+
+The classes in dark gray are dependencies.  The classes in light gray come from the framework.  The classes in white come from the customized web application.
+
+In some cases, some of the white classes might not be required because the inherited class already provides sufficient functionality and does not need to be extended.  For instance, for some systems, the BaseUser class might be enough and there would no reasons to have a User subclass.
+
+The main class is the App that inherits from BaseApp that is a specialization of a Flask application. It implements HTTP requests of a basic chat application like:
+- join
+- post
+- leave
+- etc.
+
+The Api class implements all the business logic and models specific to the chat application. 
+
+User and Chatroom classes are data structures that are used by the model in the Api.  The BaseUser and BaseChatroom already provide some basic functionalities but in many cases, they will need to be customized.
+
+The ChatroomCleaner class is an utility class that runs a thread that cleans periodically inactive users that joined the system.  
+
+We will take a deeper look at these classes later.
 
 ## Installation
 
@@ -55,7 +79,7 @@ Let's do that.
 	pipenv lock --clear
 	pipenv install --clear ~/chat-collection-framework/dist/chat_collection_framework-X.Y.Z-py3-none-any.whl
 	
-The second line is only useful in the case that you have already installed the ChatCollectionFramework and that you want to uninstall it before reinstalling it in your project.  This might come handy if you need to modify the code of the ChatCollectionFramework.  That could be needed because the package is still in development and might need either bug fixes or new features.
+The second line is only useful in the case that you have already installed the ChatCollectionFramework and that you want to uninstall it before reinstalling it in your project.  This might come handy if you need to modify the code of the ChatCollectionFramework or if you want to upgrade it to a newer version.
 
  At this stage, the ChatCollectionFramework should be installed.  However, before we can use it, we need to configure a few elements.
  
@@ -64,6 +88,8 @@ The second line is only useful in the case that you have already installed the C
  	cp ~/chat-collection-framework/config.json.sample config.json
  
  We should edit the config.json and replace all occurrences of ChatCollectionServer by my-custom-chat-server.
+ 
+ For more information about the configuration parameters, check the appendices.
  
  Then, let's write a logging configuration file.  To do that, we will use the provided sample configuration file one more time:
  
@@ -95,6 +121,39 @@ If you set up the Nginx web server properly to that it redirects the requests fr
 When configured with Nginx, it should look like this:
 
 ![Conversation sample with default implementation](images/my-custom-chat-server-default-chat-sample.png  "Conversation sample with default implementation")
+
+It might be a good idea to reuse the automated tests from the framework and integrate them to your custom application.  This way, you can leverage the framework even more:
+
+	cp -ra ~/chat-collection-framework/tests .
+
+Before running the tests, you will need to install some additional modules into your Python environment:
+
+	exit
+	pipenv install pytest psutil bs4
+	pipenv shell
+
+Also, by defaut, the tests use the files config.json.sample and logging.conf.sample instead of config.json and logging.conf because the latter should not be versioned in the code repository.  You should do the same thing as well:
+
+	cp config.json config.json.sample
+	cp logging.conf logging.conf.sample
+	echo config.json >> .gitignore
+	echo logging.conf >> .gitignore
+
+To run the tests, we do:
+
+	pytest -s
+
+As we have not started yet to customize the application, all the tests should pass successfully.
+
+If you're using bitbucket to host your code repository, you could also reuse the configuration file from the framework that will run the tests automatically each time that you push commits on the repository:
+
+	cp ~/chat-collection-framework/bitbucket-pipelines.yml .
+
+And edit the bitbucket-pipelines.yml and remove the line that refers to App.py.sample file.  This file doesn't exist in our case and is not needed. 
+
+Then you will have to activate the pipelines in your bitbucket settings page to use this feature.
+
+If your code repository is hosted on Github, you will need to write a .travis.yml file instead.  Read documentation on Github for more information.
 
 
 ## Customization
@@ -245,9 +304,19 @@ We can see that by default, 2 CSS files are referred:
 - default_static/default_style.css
 - static/style.css
 
-The first contains the default CSS definitions.  The second one contains customized definitions that will be loaded on top of the default ones.  So if we want to reuse the default style, we can leave the first line and add a new file static/style.css to override some styles when needed.  In the case where a completely different style is desired, it's probably better to remove the first line and just use the second line.
+The first contains the default CSS definitions.  The second one contains customized definitions that will be loaded on top of the default ones.  So if we want to reuse the default style, we can keep the reference to the default_style.css and add a new file static/style.css to override some style definitions when needed.  In the case where a completely different style is desired, it might be better to remove the reference to default_style.css altogether.
 
-If the changes are only visual, that should be enough.
+For example, if we want to change the background and foreground colors, we could do:
+
+	mkdir static
+	cp ~/chat-collection-framework/static/default_style.css static/style.css
+
+And edit the static/style.css file so that it contains only:
+
+	body {
+	    background-color: #333333;
+	    color: #ffffff;
+	}
 
 However, if there are some changes in the behavior, some modifications on the server code will also be needed.   For example, let's say that we want to add mandatory values into the form that must be provided before joining the chat system.  We could add some client-side validations but we should also add some server-side validations as well.
 
@@ -365,6 +434,27 @@ And once that the チャットを始める button is clicked, the next page look
 
 ![Custom chatroom page with username](images/my-custom-chat-server-chatroom-with-username.png  "Custom chatroom page with username")
 
+One last thing that needs to be addressed is that the automated tests need to be updated according to our latest changes.
+
+As we have added a new mandatory parameter to the join request, some tests will fail.  They must be adjusted to reflect this change.
+
+The file tests/chat_test.py must be edited so that every call to join request must now pass the username parameter like this:
+
+	usernames = [
+	    "John",
+	    "Sora",
+	    "Eric",
+	    "Tanaka",
+	    "Gary",
+	    "Kodama",
+	    "Stanley",
+	    "Kyosuke",
+	    "Harry",
+	    "Juan"
+	]
+	username = username = usernames[randint(0, len(usernames) -1)]
+	command = f'curl -X POST http://127.0.0.1:{PORT}/{WEBAPP_CONTEXT}/join -d "clientTabId=11111" -d"username={username}"'
+
 That's how you can customize the framework.
 
 In our case, the changes were very simple.  Some major changes might be needed for some situations.  For more real examples, it's recommended to check the code of other existing projects that are using the ChatCollectionFramework.
@@ -375,34 +465,59 @@ As much as possible, it's recommended to try minimizing changes and try reusing 
 
 
 
+##  Appendices
 
+### Config.json
 
+This section explains the configuration parameters:
 
+- sessions
 
+This is the directory where the HTTP sessions will be stored by Flask.  When users access the chat system, the web server can keep data associated to the connection.  These data are kept in text files in this directory.
 
+- sessionTimeout
 
+This is the delay where the sessions will be automatically removed from the server when a user is inactive for too long.
 
+- cookiePath
 
+This is the url to which the session cookie will be associated with.
 
+- archives
 
-Then we can edit the templates/index.html page and change it
+The location on disk where the dialgos will be archived.
 
+- web_context
 
+The name of the web app on the server. This is the string that you see in the URL of the server just after the domain name and before the request action verb.
 
+- poll_interval
 
+The number of seconds that the client issues a poll request to the server to retrieve updated state of his chatroom.
 
+- delay_for_partner
 
+The number of seconds that  a client will wait in order to be matched with another chat partner.  After this delay, the client will be forced to leave  the chat system and try again later.
 
+- chatroom_cleaning_interval
 
+The number of seconds between each time the ChatroomCleaner thread will perform his routine cleaning task.
 
+- msg_count_low
 
+The minimum number of messages a user must post before that a dialog can be terminated.  Before that threshold, user will still be able to leave the chat but a warning message will tell him  that the dialog is too short.
 
-By default, the page found in ~/chat-collection-framework/
+- msg_count_high
 
+After a user has posted this amount of message, a warning message will be shown indicating that the dialog is long enough and that it should be concluded soon.
 
+- experiment_id
 
+The identifier of the crowdsourcing experiment that will be shown to the users when the chat is terminated propperly.
 
+- prevent_multiple_tabs
 
+When "True", a user will not be able to access the chat system using multiple tabs on the same browser.
 
 ## Troubleshooting
 
