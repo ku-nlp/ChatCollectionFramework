@@ -10,4 +10,5 @@ pipelines:
           - pipenv sync
           - cp App.py.sample App.py
           - mkdir logs
+          - pipenv install --dev pytest psutil
           - pipenv run py.test -s

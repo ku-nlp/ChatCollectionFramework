@@ -9,8 +9,6 @@ verify_ssl = true
 flask-session = "*"
 pytz = "*"
 python-dateutil = "*"
-pytest = "*"
-psutil = "*"
 beautifulsoup4 = "*"
 
 [requires]
