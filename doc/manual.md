@@ -395,7 +395,7 @@ The file should look something like this:
 	<body class="column">
 	<h1>対話収集タスクへようこそ</h1>
 	<br/><br/>
-	<p>チャットをスタートする時はボトンをクリックして下さい。</p>
+	<p>チャットをスタートする時はボタンをクリックして下さい。</p>
 	<br/><br/>
 	<form id="form-join" action="join" method="POST">
 	<input type="hidden" id="client-tab-id" name="clientTabId"/>
