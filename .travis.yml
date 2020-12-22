@@ -1,0 +1,11 @@
+language: python
+
+python:
+    - "3.7"
+
+install:
+    - pip install pipenv
+    - pipenv sync
+    - cp App.py.sample App.py
+    - mkdir logs
+    - pipenv run py.test -s
