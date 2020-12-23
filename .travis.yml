@@ -8,4 +8,6 @@ install:
     - pipenv sync
     - cp App.py.sample App.py
     - mkdir logs
+
+script:
     - pipenv run py.test -s
