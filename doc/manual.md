@@ -43,31 +43,31 @@ Before installing the framework, let's prepare the working directory of our dumm
 
 Let's make a directory in our home directory:
 
-	cd
-	mkdir my-custom-chat-server
-	cd my-custom-chat-server
+    cd
+    mkdir my-custom-chat-server
+    cd my-custom-chat-server
 
 To prepare the Python environment of our project, we do:
 
-	pipenv --python python3
+    pipenv --python python3
 
 That's it. We have now an empty project.
 
 It's time to integrate the _ChatCollectionFramework_ into our project.  Before we can do that, we must first build it from source.
 
-As the framework is currently not public, you must download and install it into your home directory from this [git repository](https://bitbucket.org/ku_nlp/chatcollectionframework/src/master/) :
+You must download and install it into your home directory from the Git repository :
 
-	cd
-	git clone git@bitbucket.org:ku_nlp/chatcollectionframework.git chat-collection-framework
-	cd chat-collection-framework
+    cd
+    git clone https://github.com/ku-nlp/ChatCollectionFramework.git
+    cd ChatCollectionFramework
   
 You might find additional Instructions in the _README.md_ file but essentially, to build the wheel file, you need to do that:
 
-	pipenv sync
-	pipenv shell
-	rm -rf dist/*
-	python setup.py clean --all 
-	python setup.py sdist bdist_wheel
+    pipenv sync
+    pipenv shell
+    rm -rf dist/*
+    python setup.py clean --all 
+    python setup.py sdist bdist_wheel
 
 The third and fourth commands are not needed the very first time that you build the package.  However, they will be needed for ulterior builds.
 
@@ -75,18 +75,18 @@ At this point, you should have the _chat_collection_framework-X.Y.Z-py3-none-any
 
 Let's do that.
 
-	cd ~/my-custom-chat-server
-	pipenv uninstall chat_collection_framework
-	pipenv lock --clear
-	pipenv install --clear ~/chat-collection-framework/dist/chat_collection_framework-X.Y.Z-py3-none-any.whl
-	
+    cd ~/my-custom-chat-server
+    pipenv uninstall chat_collection_framework
+    pipenv lock --clear
+    pipenv install --clear ~/ChatCollectionFramework/dist/chat_collection_framework-X.Y.Z-py3-none-any.whl
+    
 The second line is only useful in the case that you have already installed the _ChatCollectionFramework_ and that you want to uninstall it before reinstalling it in your project.  This might come handy if you need to modify the code of the _ChatCollectionFramework_ or if you want to upgrade it to a newer version.
 
  At this stage, the _ChatCollectionFramework_ should be installed.  However, before we can use it, we need to configure a few elements.
  
  First, let's write a configuration file. To do that, we will use the provided sample configuration file:
  
- 	cp ~/chat-collection-framework/config.json.sample config.json
+    cp ~/ChatCollectionFramework/config.json.sample config.json
  
  We should edit the config.json and replace all occurrences of _ChatCollectionServer_ by _my-custom-chat-server_.
  
@@ -94,24 +94,24 @@ The second line is only useful in the case that you have already installed the _
  
  Then, let's write a logging configuration file.  To do that, we will use the provided sample configuration file one more time:
  
-	cp ~/chat-collection-framework/logging.conf.sample logging.conf
+    cp ~/ChatCollectionFramework/logging.conf.sample logging.conf
  
  The logging.conf file needs no modifications.  However, we need to create the log output directory so that it can work properly:
  
-	 mkdir logs
+     mkdir logs
 
 The last step is to use the provided _App.py.sample_ file as a starting point:
 
-	cp ~/chat-collection-framework/App.py.sample App.py
+    cp ~/ChatCollectionFramework/App.py.sample App.py
 
 You are now ready to start the server and check if it works.
 
-	pipenv shell
-	python App.py
+    pipenv shell
+    python App.py
 
 For example, if you're running the server on the host _basil501_, launch a browser pointing to this page:
 
-	http://basil501:8993/my-custom-chat-server/index
+    http://basil501:8993/my-custom-chat-server/index
 
 You should see something that looks like this:
 
@@ -125,36 +125,34 @@ When configured with Nginx, it should look like this:
 
 It might be a good idea to reuse the automated tests from the framework and integrate them to your custom application.  This way, you can leverage the framework even more:
 
-	cp -ra ~/chat-collection-framework/tests .
+    cp -ra ~/ChatCollectionFramework/tests .
 
 Before running the tests, you will need to install some additional modules into your Python environment:
 
-	exit
-	pipenv install pytest psutil bs4
-	pipenv shell
+    exit
+    pipenv install pytest psutil bs4
+    pipenv shell
 
 Also, by defaut, the tests use the files config.json.sample and logging.conf.sample instead of config.json and logging.conf because the latter should not be versioned in the code repository.  You should do the same thing as well:
 
-	cp config.json config.json.sample
-	cp logging.conf logging.conf.sample
-	echo config.json >> .gitignore
-	echo logging.conf >> .gitignore
+    cp config.json config.json.sample
+    cp logging.conf logging.conf.sample
+    echo config.json >> .gitignore
+    echo logging.conf >> .gitignore
 
 To run the tests, we do:
 
-	pytest -s
+    pytest -s
 
 As we have not started yet to customize the application, all the tests should pass successfully.
 
-If you're using bitbucket to host your code repository, you could also reuse the configuration file from the framework that will run the tests automatically each time that you push commits on the repository:
+If you're using github to host your code repository, you could also reuse the configuration file from the framework that will run the tests automatically each time that you push commits on the repository:
 
-	cp ~/chat-collection-framework/bitbucket-pipelines.yml .
+    cp ~/ChatCollectionFramework/.travis.yml .
 
-And edit the _bitbucket-pipelines.yml_ and remove the line that refers to _App.py.sample file_.  This file doesn't exist in our case and is not needed. 
+And edit the .travis.yml and remove the line that refers to _App.py.sample file_.  This file doesn't exist in our case and is not needed. 
 
-Then you will have to activate the pipelines in your bitbucket settings page to use this feature.
-
-If your code repository is hosted on Github, you will need to write a _.travis.yml_ file instead.  Read documentation on Github for more information.
+Then you will have to activate the tests in your github settings page to use this feature.
 
 
 ## Implementation
@@ -274,55 +272,55 @@ First, let's try to change the look of the welcoming page.
 
 The framework assumes that the first page is called index.  Let's take a look at the framework code handling this request.
 
-The entry points of the requests are defined in the class BaseApp that can be found in _~/chat-collection-framework/server/base.py_:
+The entry points of the requests are defined in the class BaseApp that can be found in _~/ChatCollectionFramework/server/base.py_:
 
-	class BaseApp(Flask):
-	
-	    def __init__(self, import_name, api):
-	        Flask.__init__(self, import_name)
-	
-	        my_loader = jinja2.ChoiceLoader([
-	            self.jinja_loader,
-	            jinja2.FileSystemLoader(os.path.join(sys.prefix, 'templates')),
-	        ])
-	        self.jinja_loader = my_loader
-	
-	        self.api = api
-	        self.cfg = api.cfg
-	        self.logger = api.logger
-	
-	        self.SESSION_TYPE = 'filesystem'
-	        self.SESSION_COOKIE_NAME = 'CGISESSID'
-	        self.SESSION_FILE_DIR = self.cfg['sessions']
-	        self.SESSION_COOKIE_PATH = self.cfg['cookiePath']
-	        self.SESSION_COOKIE_SECURE = True
-	
-	        self.config.from_object(self)
-	        Session(self)
-	
-	        @self.route(f"/{self.cfg['web_context']}/static/<path:path>")
-	        def get_static(path):
-	            return self.get_static(path)
-	
-	        @self.route(f"/{self.cfg['web_context']}/default_static/<path:path>")
-	        def get_default_static(path):
-	            return self.get_default_static(path)
-	
-	        @self.route(f"/{self.cfg['web_context']}/version")
-	        def version():
-	            return self.version()
-	
-	        @self.route(f"/{self.cfg['web_context']}/index")
-	        def index():
-	            return self.index()
-	
-	        @self.route(f"/{self.cfg['web_context']}/admin")
-	        def admin():
-	            return self.admin()
-	         
-	        ... 
-	           
-	
+    class BaseApp(Flask):
+    
+        def __init__(self, import_name, api):
+            Flask.__init__(self, import_name)
+    
+            my_loader = jinja2.ChoiceLoader([
+                self.jinja_loader,
+                jinja2.FileSystemLoader(os.path.join(sys.prefix, 'templates')),
+            ])
+            self.jinja_loader = my_loader
+    
+            self.api = api
+            self.cfg = api.cfg
+            self.logger = api.logger
+    
+            self.SESSION_TYPE = 'filesystem'
+            self.SESSION_COOKIE_NAME = 'CGISESSID'
+            self.SESSION_FILE_DIR = self.cfg['sessions']
+            self.SESSION_COOKIE_PATH = self.cfg['cookiePath']
+            self.SESSION_COOKIE_SECURE = True
+    
+            self.config.from_object(self)
+            Session(self)
+    
+            @self.route(f"/{self.cfg['web_context']}/static/<path:path>")
+            def get_static(path):
+                return self.get_static(path)
+    
+            @self.route(f"/{self.cfg['web_context']}/default_static/<path:path>")
+            def get_default_static(path):
+                return self.get_default_static(path)
+    
+            @self.route(f"/{self.cfg['web_context']}/version")
+            def version():
+                return self.version()
+    
+            @self.route(f"/{self.cfg['web_context']}/index")
+            def index():
+                return self.index()
+    
+            @self.route(f"/{self.cfg['web_context']}/admin")
+            def admin():
+                return self.admin()
+             
+            ... 
+               
+    
 A _BaseApp_ is basically a Flask App that handles a predetermined set of requests.  The supported requests are:
 
 - version: shows the version of the web application.
@@ -337,73 +335,73 @@ As we can see, a route is declared for each request and a corresponding function
 
 In our case, for the index request, the default behavior looks like this:
  
-	    def index(self):
-	        try:
-	            return render_template(template_name_or_list='index.html')
-	        except TemplateNotFound:
-	            return render_template(template_name_or_list='default_index.html')
-	
+        def index(self):
+            try:
+                return render_template(template_name_or_list='index.html')
+            except TemplateNotFound:
+                return render_template(template_name_or_list='default_index.html')
+    
 As we can see, it tries first to render the index.html template page if it can find it. Otherwise, it will render the default_index.html template page that comes from the framework.
 
 So if we just want to change the look of the index page, we should make a templates directory and copy the default_index.html into it with the name index.html:
 
-	mkdir templates
-	cp ~/chat-collection-framework/default_index.html templates/index.html
+    mkdir templates
+    cp ~/ChatCollectionFramework/default_index.html templates/index.html
 
 Let's edit the _templates/index.html_ file and customize it a little bit.
 
 The file should look something like this:
 
-	<!DOCTYPE html>
-	<html lang="ja">
-	<head>
-	    <meta charset="utf-8">
-	    <title>チャットサーバー</title>
-	    <link rel="stylesheet" href="default_static/default_style.css">
-	    <link rel="stylesheet" href="static/style.css">
-	    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-	    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
-	    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-	    <script src="default_static/default_utils.js"></script>
-	    <script src="static/utils.js"></script>
-	    <script>
-	        function validateForm(evt) {
-	            // Perform some validations here.
-	            // If something is invalid, show an error message and return false.
-	            // Otherwise return true.
-	            //
-	            // For example: 
-	            //
-	            // var selectedPartnerType = $('input[name="partner-type"]:checked').val();
-	            // if (selectedPartnerType == 'gender-same' && (!selectedGender || selectedGender == 'unknown')) {
-	            //     showSimpleDialog('注意', '同性とのチャットを希望される場合は、あなたの性別を選択してください。');
-	            //     return false;
-	            //}
-	            return true;
-	        }
-	
-	        $(document).ready(function(evt) {
-	            // The clientTabId is used to differentiate users
-	            // when the client uses more than one tab in his browser.
-	            var clientTabId = new Date().getTime();
-	            $('#client-tab-id').val(clientTabId);
-	
-	            $('#join-chat').on('click', validateForm);
-	        });
-	    </script>
-	</head>
-	<body class="column">
-	<h1>対話収集タスクへようこそ</h1>
-	<br/><br/>
-	<p>チャットをスタートする時はボタンをクリックして下さい。</p>
-	<br/><br/>
-	<form id="form-join" action="join" method="POST">
-	<input type="hidden" id="client-tab-id" name="clientTabId"/>
-	</form>
-	<input type="submit" id="join-chat" value="チャットを始める" class="button" form="form-join"/>
-	<div id="dialog-simple"></div>
-	</body>
-	
+    <!DOCTYPE html>
+    <html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>チャットサーバー</title>
+        <link rel="stylesheet" href="default_static/default_style.css">
+        <link rel="stylesheet" href="static/style.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+        <script src="default_static/default_utils.js"></script>
+        <script src="static/utils.js"></script>
+        <script>
+            function validateForm(evt) {
+                // Perform some validations here.
+                // If something is invalid, show an error message and return false.
+                // Otherwise return true.
+                //
+                // For example: 
+                //
+                // var selectedPartnerType = $('input[name="partner-type"]:checked').val();
+                // if (selectedPartnerType == 'gender-same' && (!selectedGender || selectedGender == 'unknown')) {
+                //     showSimpleDialog('注意', '同性とのチャットを希望される場合は、あなたの性別を選択してください。');
+                //     return false;
+                //}
+                return true;
+            }
+    
+            $(document).ready(function(evt) {
+                // The clientTabId is used to differentiate users
+                // when the client uses more than one tab in his browser.
+                var clientTabId = new Date().getTime();
+                $('#client-tab-id').val(clientTabId);
+    
+                $('#join-chat').on('click', validateForm);
+            });
+        </script>
+    </head>
+    <body class="column">
+    <h1>対話収集タスクへようこそ</h1>
+    <br/><br/>
+    <p>チャットをスタートする時はボタンをクリックして下さい。</p>
+    <br/><br/>
+    <form id="form-join" action="join" method="POST">
+    <input type="hidden" id="client-tab-id" name="clientTabId"/>
+    </form>
+    <input type="submit" id="join-chat" value="チャットを始める" class="button" form="form-join"/>
+    <div id="dialog-simple"></div>
+    </body>
+    
 As long as we keep the essential parts, that are, the form containing the _join-chat_ button, the Javascript code that handles the event associated with the _join-chat_ button, and the initialization of the _clientTabId_ variable, it should work normally.
 
 So it's possible to add some text, change the CSS attributes, alter the structure of the document and make it look as we want.  
@@ -417,23 +415,23 @@ The first contains the default CSS definitions.  The second one contains customi
 
 For example, if we want to change the background and foreground colors, we could do:
 
-	mkdir static
-	cp ~/chat-collection-framework/static/default_style.css static/style.css
+    mkdir static
+    cp ~/ChatCollectionFramework/static/default_style.css static/style.css
 
 And edit the _static/style.css_ file so that it contains only:
 
-	body {
-	    background-color: #333333;
-	    color: #ffffff;
-	}
+    body {
+        background-color: #333333;
+        color: #ffffff;
+    }
 
 However, if there are some changes in the behavior, some modifications on the server code will also be needed.   For example, let's say that we want to add mandatory values into the form that must be provided before joining the chat system.  We could add some client-side validations but we should also add some server-side validations as well.
 
 Let's say that we want each user to provide their name before joining the chat, we could modify the original form and add a Name field like this:
 
-	<form id="form-join" action="join" method="POST">
-	名前：<input type="text" id="username" name="username"/><br/><br/>
-	
+    <form id="form-join" action="join" method="POST">
+    名前：<input type="text" id="username" name="username"/><br/><br/>
+    
 On the server-side, we will have to modify the join request handling so that the user-name parameter must be provided or return an 400 HTTP response if none is provided.
 
 The recommended approach is to copy the code from the framework and adapt it to our needs.  There are usually 3 levels of changes:
@@ -444,7 +442,7 @@ The recommended approach is to copy the code from the framework and adapt it to 
 
 Depending on the situation, not all levels need to be changed. The fewer changes, the better.
 
-In our case, we want first to override the _App.join()_ method.  The code can be found in _~/chat-collection-framework/server/base.py_.  It looks like this:
+In our case, we want first to override the _App.join()_ method.  The code can be found in _~/ChatCollectionFramework/server/base.py_.  It looks like this:
 
     def join(self, session, request):
         if 'clientTabId' not in request.form:
@@ -489,8 +487,8 @@ We can copy the whole method into our App class and adjust it so that it tests i
 
     class App(BaseApp):
 
-	...
-	
+    ...
+    
       def join(self, session, request):
         if 'clientTabId' not in request.form or 'username' not in request.form:
             return '', 400
@@ -522,18 +520,18 @@ We removed the _default_chatroom.html_ because we will need it no longer because
 
 Again to customize the _chatroom.html_, it's recommended to copy the _default_chatroom.html_ page from the framework and adjust it to our needs:
 
-	cp ~/chat-collection-framework/templates/default_chatroom.html templates/chatroom.html
+    cp ~/ChatCollectionFramework/templates/default_chatroom.html templates/chatroom.html
 
 And we adjust it a little bit to show the username in the header:
 
-	<body class="column fixed-height">
-	    <h2>チャットルーム({{username}})</h2>
-	
+    <body class="column fixed-height">
+        <h2>チャットルーム({{username}})</h2>
+    
 That's it!
 
 Let's start the server and see if our changes work properly:
 
-	python App.py
+    python App.py
 
 The index page now looks like this:
 
@@ -549,20 +547,20 @@ As we have added a new mandatory parameter to the join request, some tests will 
 
 The file _tests/chat_test.py_ must be edited so that every call to join request must now pass the username parameter like this:
 
-	usernames = [
-	    "John",
-	    "Sora",
-	    "Eric",
-	    "Tanaka",
-	    "Gary",
-	    "Kodama",
-	    "Stanley",
-	    "Kyosuke",
-	    "Harry",
-	    "Juan"
-	]
-	username = username = usernames[randint(0, len(usernames) -1)]
-	command = f'curl -X POST http://127.0.0.1:{PORT}/{WEBAPP_CONTEXT}/join -d "clientTabId=11111" -d"username={username}"'
+    usernames = [
+        "John",
+        "Sora",
+        "Eric",
+        "Tanaka",
+        "Gary",
+        "Kodama",
+        "Stanley",
+        "Kyosuke",
+        "Harry",
+        "Juan"
+    ]
+    username = username = usernames[randint(0, len(usernames) -1)]
+    command = f'curl -X POST http://127.0.0.1:{PORT}/{WEBAPP_CONTEXT}/join -d "clientTabId=11111" -d"username={username}"'
 
 That's how you can customize the framework.
 

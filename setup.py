@@ -11,7 +11,7 @@ setuptools.setup(
     description="A simple framework to implement a basic chat web application.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://bitbucket.org/ku_nlp/chatcollectionframework",
+    url="https://github.com/ku-nlp/ChatCollectionFramework.git",
     packages=setuptools.find_packages(),
     install_requires=[
         'flask-session',
