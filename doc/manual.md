@@ -584,7 +584,7 @@ This is the directory where the HTTP sessions will be stored by Flask.  When use
 
 - sessionTimeout
 
-This is the delay where the sessions will be automatically removed from the server when a user is inactive for too long.
+This is the delay (in minutes) where the sessions will be automatically removed from the server when a user is inactive for too long.  Currently not used.
 
 - cookiePath
 
@@ -592,7 +592,7 @@ This is the url to which the session cookie will be associated with.
 
 - archives
 
-The location on disk where the dialgos will be archived.
+The location on disk where the dialogs will be archived.
 
 - web_context
 
@@ -604,7 +604,7 @@ The number of seconds that the client issues a poll request to the server to ret
 
 - delay_for_partner
 
-The number of seconds that  a client will wait in order to be matched with another chat partner.  After this delay, the client will be forced to leave  the chat system and try again later.
+The number of seconds that a client will wait in order to be matched with another chat partner.  After this delay, the client will be forced to leave the chat system and try again later.
 
 - chatroom_cleaning_interval
 
@@ -612,15 +612,15 @@ The number of seconds between each time the _ChatroomCleaner_ thread will perfor
 
 - msg_count_low
 
-The minimum number of messages a user must post before that a dialog can be terminated.  Before that threshold, user will still be able to leave the chat but a warning message will tell him  that the dialog is too short.
+The minimum number of messages a user must post before that a dialog can be terminated.  Before that threshold, user will still be able to leave the chat but a warning message will tell him that the dialog is too short.
 
 - msg_count_high
 
-After a user has posted this amount of message, a warning message will be shown indicating that the dialog is long enough and that it should be concluded soon.
+After a user has posted this number of messages, a warning message will be shown indicating that the dialog is long enough and that it should be concluded soon.
 
 - experiment_id
 
-The identifier of the crowdsourcing experiment that will be shown to the users when the chat is terminated propperly.
+The identifier of the crowdsourcing experiment that will be shown to the users when the chat is terminated properly.
 
 - prevent_multiple_tabs
 
