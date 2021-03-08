@@ -109,15 +109,15 @@ You are now ready to start the server and check if it works.
     pipenv shell
     python App.py
 
-For example, if you're running the server on the host _basil501_, launch a browser pointing to this page:
+For example, if you're running the server on the host _myhost_, launch a browser pointing to this page:
 
-    http://basil501:8993/my-custom-chat-server/index
+    http://myhost:8993/my-custom-chat-server/index
 
 You should see something that looks like this:
 
 ![Default Index Page](images/my-custom-chat-server-default-index-page.png  "Default Index Page")
 
-If you set up the Nginx web server properly to that it redirects the requests from the _my-custom-chat-server_ context to your server running on _basil503_, you should already be able to use the system with 2 different browsers and simulate a conversation between 2 users.  The configuration with Nginx web server is mandatory because the framework assumes that https is used and it will not work well without it.   The configuration of the Nginx server is out of scope of this document.  
+If you set up the Nginx web server properly to that it redirects the requests from the _my-custom-chat-server_ context to your server running on _myhost_, you should already be able to use the system with 2 different browsers and simulate a conversation between 2 users.  The configuration with Nginx web server is mandatory because the framework assumes that https is used and it will not work well without it.   The configuration of the Nginx server is out of scope of this document.
 
 When configured with Nginx, it should look like this:
 
