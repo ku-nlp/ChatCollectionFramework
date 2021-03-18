@@ -81,3 +81,14 @@ pipenv uninstall chat_collection_framework
 pipenv lock --clear
 pipenv install --clear $CHAT_COLLECTION_FRAMEWORK/dist/chat_collection_framework-X.Y.Z-py3-none-any.whl
 ```
+
+# Citation
+Please cite this paper if you use Chat Collection Framework in your work:
+```sh
+@InProceedings{児玉2021クラウドソーシング,
+  author    = {児玉 貴志, Frederic Bergeron, 新 隼人, 田中 リベカ, 坂田 亘, 黒橋 禎夫},
+  title     = {クラウドソーシングで利用可能な日本語対話収集基盤},
+  booktitle = {言語処理学会 第27回年次大会},
+  year      = {2021},
+}
+```
