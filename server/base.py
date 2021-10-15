@@ -329,12 +329,17 @@ class BaseApi:
                                 last_poll = datetime.fromisoformat(chatroom.poll_requests[user_id][-1])
                                 self.logger.debug(f"now={now} type={type(now)} last_poll={last_poll} type={type(last_poll)}")
                                 delta = now - last_poll
+
+                                # Fix to prevent this normalization issue that occurs when the now and last_poll values are very close to each other:
+                                # https://stackoverflow.com/questions/28677673/why-does-datetime-datetime-now-datetime-datetime-now-equal-to-datetime-tim
+                                delta_in_secs = delta.seconds if delta.days >= 0 else 0
+
                                 self.logger.debug(
                                     f"Check user {user_id}... Last poll: {last_poll.isoformat()} Now: {now.isoformat()}"
-                                    " Delta(s): {delta.seconds}"
+                                    " Delta(s): {delta_in_secs}"
                                 )
                                 # To play safe, I use a larger value than poll_interval
-                                if delta.seconds > self.cfg['poll_interval'] * 3:
+                                if delta_in_secs > self.cfg['poll_interval'] * 3:
                                     self.logger.debug(f"{user_id} has been inactive for too long. Let's kick him out of room {chatroom_id}")
                                     inactive_users.append((user_id, chatroom_id))
                     finally:
